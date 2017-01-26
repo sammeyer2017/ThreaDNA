@@ -14,14 +14,14 @@ IMPORTANT: the model is built from one or several high-resolution structures of 
 
 The calculation is based on the hypothesis that the protein imposes DNA's shape at the nanometer-scale. The bending energy is then calculated from the deformed configuration, using the sequence-dependent structure/elastic parameters for the internal base-pair or the base-pair step deformations. For proteins where several alternate structures are available (typically obtained with different DNA sequences), these can be combined in the calculation: for a given sequence, DNA then "chooses" the weight of each conformation from the different Boltzmann weights. 
 
-# Dependencies
+## Dependencies
 The program requires Python with the NumPy library. It was successfully tested on Linux and MacOS platforms, with versions of NumPy >= 1.6, and is more efficient on versions >=1.7. 
 Computational requirements: the computation time and memory load are proportional to the analyzed sequence length and number of protein-bound nucleotides. For a single protein-DNA complex analyzed, the computation typically takes ~ 200 sec and < 1Gb RAM for a 10 Mb sequence. 
 
-# Description of the input/output files
+## Description of the input/output files
 To get help on command line options, use the command -h for each program/subprogram: e.g. threadna -h, threadna -c -h, ...
 
-## Subprogram : add a new DNA-protein to the database
+# Subprogram : add a new DNA-protein to the database
 Usage: 
 threadna -a [-p PDBfile] [-r REF] prot_name input
 - prot_name: name of the protein in the database. When combining alternate structural models for the same proteins, mind to use the same name (including the case)
@@ -34,11 +34,7 @@ RECOMMENDATION FOR THE INPUT:
 - if you are analyzing a protein not present or corrupted on the NDB server, download the PDB file and let it run on the Web3DNA webserver to get the .out file. AGAIN, CHECK THAT ALL BASEPAIRS WERE PROPERLY ANALYZED AND ARE PRESENT IN THE LIST. 
 - If it does not work or you want to include several structures, try installing Curves+ or contact the authors for help. 
 
-
-
-
-
-## Main program
+# Main program
 Computes an energy profile along a sequence
 Usage: 
 threadna -c sequence_file conf_file
@@ -86,9 +82,7 @@ Parameter set for the DNA sequence-dependent basepair/step structure/stiffness.
 - "ABC_i": dataset of internal basepair deformations from (Pasi et al. NAR 2014) based on 1 microsecond molecular dynamics simulations. Sequence dependence: trinucleotides. 
 Note: for historical reasons, the previous (50 ns) version of the "ABC" datasets can be used with "ABC_s_old" and "ABC_i_old". 
 
-
-
-## Helper programs
+# Helper programs
 SeqMotifs
 Simple program to find the positions along a given sequence, where the protein binds a given nucleotide at a given position. 
 
@@ -99,8 +93,6 @@ For instance, for the Fis protein that binds 15 DNA bases, with the basepair 8 t
 threadna -s -r 8 sequence_file.fasta G 1 15
 threadna -s -r 8 sequence_file.fasta C 15 15
 The resulting tables have exactly the same structure and indexes as the ThreaDNA profile obtained on the same model (using the pattern "15"). The deformation energies associated to the protein bound with G/C at the desired positions can thus be obtained immediately using MatLab/R/Numpy/Excel, and they can be combined, for instance to introduce a free energy penalty when the correct nucleotide is absent. 
-
-
 
 Occupancy
 Helper program that computes an occupancy and/or coverage profile. 
