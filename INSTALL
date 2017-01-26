@@ -1,0 +1,11 @@
+#!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$DIR"
+echo '#!/bin/bash' > threadna
+echo DIR=\"$(pwd)\" >> threadna
+cat exec.sh >> threadna
+chmod u+x threadna
+if [ $# = 1 ]
+then
+  ln -s $(pwd)/threadna $1/threadna
+fi
