@@ -83,7 +83,7 @@ Parameter set for the DNA sequence-dependent basepair/step structure/stiffness.
 Note: for historical reasons, the previous (50 ns) version of the "ABC" datasets can be used with "ABC_s_old" and "ABC_i_old". 
 
 # Helper programs
-SeqMotifs
+## SeqMotifs
 Simple program to find the positions along a given sequence, where the protein binds a given nucleotide at a given position. 
 
 Usage:
@@ -94,7 +94,7 @@ threadna -s -r 8 sequence_file.fasta G 1 15
 threadna -s -r 8 sequence_file.fasta C 15 15
 The resulting tables have exactly the same structure and indexes as the ThreaDNA profile obtained on the same model (using the pattern "15"). The deformation energies associated to the protein bound with G/C at the desired positions can thus be obtained immediately using MatLab/R/Numpy/Excel, and they can be combined, for instance to introduce a free energy penalty when the correct nucleotide is absent. 
 
-Occupancy
+## Occupancy
 Helper program that computes an occupancy and/or coverage profile. 
 Occupancy: probability that the protein occupies a given precise position, defined by the reference basepair of the protein-DNA model (e.g. the dyad basepair of a nucleosome). This profile is simply the Boltzmann inverse of the energy profile. 
 Coverage: probability that a given base is covered by a protein, which can then occupy different neighbor positions (depending on the protein size along the DNA). This profile is the occupancy profile convoluted by the protein size. 
