@@ -1,0 +1,129 @@
+<tool id="create_config_file" name="Create config file" version="0.0.1">
+	<description>Create config file</description>
+	
+	<command interpreter="bash">
+    create_config_file_wrapper.sh 
+    $outfile
+    $prot
+    $struct
+    
+    #if str($option1.option2) == "Yes":
+		
+		  $option1.patt
+    
+		  #if str($option1.sym1.sym2) == "Yes" or str($option1.sym1.sym2) == "No":
+				$option1.sym1.sym2
+			#end if
+		
+			#if str($option1.tmp1.tmp2) == "Yes" or str($option1.tmp1.tmp2) == "No":
+				$option1.tmp1.tmp2
+			#end if
+		
+			$option1.tmp_fact
+		
+			#if str($option1.param1.param2) == "ABC_s" or str($option1.param1.param2) == "ABC_i" or str($option1.param1.param2) == "NP":
+				$option1.param1.param2
+			#end if
+		
+		#end if
+	</command>
+	
+	<inputs>
+	
+	  <param name="prot" type="select" label="Protein name">
+	    <options from_file="threadna_protein_names.loc">
+	      <column name="value" index="0"/>
+	    </options>
+	  </param>
+	  
+		
+	  <param name="struct" type="select" display="checkboxes" multiple="true" label="Structures" help="Please choose structures of the chosen protein only! Caution: if you just added a new structure to the database, in the present version the Galaxy server must be restarted before it appears in this list...">
+	    <options from_file="threadna_structure_names.loc">
+	      <column name="value" index="0"/>
+	    </options>
+	  </param>
+		
+		<conditional name="option1">
+			<param name="option2" type="select" label="Advanced parameters">
+				<option value="No">No</option>
+				<option value="Yes">Yes</option>
+			</param>
+		
+			<when value="Yes">
+				<param name="patt" type="text" label="Pattern" value="0"/>
+				
+				<conditional name="sym1">
+					<param name="sym2" type="select" label="Include symmetrized structures">
+						<option value="No">No</option>
+						<option value="Yes">Yes</option>
+					</param>
+				</conditional>
+		
+				<conditional name="tmp1">
+					<param name="tmp2" type="select" label="Keep tmp files">
+						<option value="No">No</option>
+						<option value="Yes">Yes</option>
+					</param>
+				</conditional>
+				
+				<param name="tmp_fact" type="text" value="1.0" label="Temperature factor"/>
+		
+				<conditional name="param1">
+					<param name="param2" type="select" label="DNA parameter">
+						<option value="ABC_s">ABC_s</option>
+						<option value="ABC_i">ABC_i</option>
+						<option value="NP">NP</option>
+					</param>
+				</conditional>
+				
+			</when>
+			
+		</conditional>
+		
+	</inputs>
+
+	<outputs>
+		<data name="outfile" format="tabular" />
+	</outputs>
+	
+	<test>
+		<param name="prot" value="CRP"/>
+		<param name="struct" value="1CGP"/>
+		<param name="patt" value="0"/>
+		<param name="sym2" value="No"/>
+		<param name="tmp2" value="No"/>
+		<param name="tmp_fact" value="1.0"/>
+		<param name="param2" value="ABC_s"/>
+		<output name="outfile" file="crp.in"/>
+	</test>
+
+	<help>
+**What it does**
+
+The program creates an input configuration file in the correct format for the main ThreaDNA program (calculate_energy), from parameters specified by the user. 
+
+Protein name: name of the protein to be analyzed. If you want to analyze a protein/structure not yet in the software database, you must add it first with the auxiliary software add_structure.
+
+Structures: IDs of the high-resolution structure(s) used in the computation for the chosen protein. Caution: the chosen structure(s) must be associated to the chosen protein, otherwise the program will not run!
+
+
+
+ADVANCED PARAMETERS
+
+1. Pattern: EMPTY (default) or integer or sequence pattern
+Describes which part of the protein-DNA complex analyzed will be included in the calculation, and which sequences of the analyzed sequence will be used. 
+- EMPTY: the nucleotide deformations of the whole oligomer are taken into account, and the energy is calculated on the whole input sequence
+- integer N (&lt; size of the DNA oligomer in the complex analyzed): only the N basepairs/steps around the reference basepair (see above) are considered in the calculation. 
+E.g. for the nucleosome structure 1kx5 that incorporates 147 basepairs, setting a value of 81 results in a deformation energy computed on the 81 central basepairs only, i.e. in the central turn of the DNA. 
+- Sequence pattern: restricts the calculation to those positions of the input sequence, which match the pattern (in usual ACGT-RYSW-KMBDHV base code). Pattern size must be shorter than protein size. WARNING: the calculation is MUCH more efficient when carried on the entire input sequence. If you want to restrict to a given sequence pattern, you may prefer to run the computation on the whole sequence first, and then to use the Penalty helper program to find the positions with a given pattern. 
+
+2. Symmetrization: Yes or No (default). If the protein is two-fold symmetric, both strands of the bound DNA can be considered as equivalent. Since the protein-DNA structures are generally not perfectly symmetric (especially when the DNA sequence is non-palindromic), if the parameter is set to "Yes", the deformations of both DNA strands are analyzed independently in the program, which makes the resulting deformation model symmetric. 
+
+3. Keep tmp: Yes or No (default). If No, only keeps the final energy profile obtained from the combination of all analyzed structural models (in arbitrary units). If Yes, an additional directory is created with all individual energy profiles (in pseudo k_B T unit, where the deformation is assumed to be entirely due to the protein, without any thermal noise). Note that their energy scales can be significantly different. 
+
+4. Temperature factor: float (default 1.0). Energy scale used in the Boltzmann factor, for the combination of different structures, in units of (k_B*T). For each sequence, a small value will keep only the most favorable deformation state, and a large value will make all alternate deformation states more equivalent.
+
+5. DNA parameter: "NP" or "ABC_s" or "ABC_i". Parameter set for the DNA sequence-dependent basepair/step structure/stiffness. "NP": dataset of basepair step deformations from (Balasubramanian, Xu, Olson, Biophys. J. 2009) based on the analysis of protein-DNA crystallographic structures. Sequence dependence: dinucleotides. "ABC_s": dataset of basepair step deformations from (Pasi et al. NAR 2014) based on 1 microsecond molecular dynamics simulations. Sequence dependence: tetranucleotides. "ABC_i": dataset of internal basepair deformations from (Pasi et al. NAR 2014) based on 1 microsecond molecular dynamics simulations. Sequence dependence: trinucleotides. Note: for historical reasons, the previous (50 ns) version of the "ABC" datasets can be used with "ABC_s_old" and "ABC_i_old". 
+	</help>
+
+</tool>

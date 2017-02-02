@@ -1,0 +1,84 @@
+<tool id="add_protein" name="Add protein to database" version="0.0.1">
+	<description>Add protein to database</description>
+
+  <command interpreter="bash">
+		add_structure_wrapper.sh 
+		$outfile
+		$name
+		#if str($DNA_struct1.DNA_struct2) == "1" or str($DNA_struct1.DNA_struct2) == "2":
+			$DNA_struct1.file
+		#end if
+		$pdb 
+		$ref
+	</command>
+	
+  <inputs>
+  	<param type="text" name="name" label="Protein name"/>
+  	
+  	<conditional name="DNA_struct1">
+			<param name="DNA_struct2" type="select" label="DNA structure in complex">
+				<option value="1">Enter NDB ID</option>
+				<option value="2">Open coord file</option>
+			</param>
+			<when value="1">
+				<param name="file" type="text" label="Enter NDB ID"/>
+			</when>
+			<when value="2">
+				<param format="txt" name="file" type="data" label="Open coord file"/> 
+			</when> 
+		</conditional>
+		
+		<param format="txt" name="pdb" type="data" label="Additional PDB file"/>
+		<param type="text" name="ref" value="0" label="Reference position"/>
+		
+  </inputs>
+
+	<outputs>
+		<data format="test" name="outfile"/>
+	</outputs>
+	
+	<test>
+		<param name="name" value="crp"/>
+		<param name="DNA_struct2" value="1"/>
+		<param name="file" value="PDR006"/>
+		<param name="pdb" value="1cgp.pdb"/>
+		<param name="ref" value="0"/>
+	</test>
+	
+	<help>
+
+**WARNING**
+
+The Galaxy version of ThreaDNA is primarily intended for computing energy profiles on proteins installed in the database. 
+
+For adding new proteins into the database, we presently recommend installing the software on your computer, at least as a first step, in order to test that the program runs correctly for the considered protein before incorporating it on the server.
+
+On the latter, if you add a new protein, we impose that the new files be checked by an administrator and the server restarted before you can use the new protein for your calculations, so please take contact, preferably with sam dot meyer at insa-lyon dot fr. 
+
+----- 
+	  
+**Dataset formats**
+
+1. Protein name: name of the protein in the database. When combining alternate structural models for the same proteins, mind to use the same name (including the case).
+
+2. Input: input of the DNA basepair/step coordinates in the complex: these can be given as (i) either a NDB ID (http://ndbserver.rutgers.edu) or (ii) a file containing the coarse-grained coordinates of the DNA within the complex, obtained from an analysis program/webserver (.out from 3DNA or the webserver http://w3dna.rutgers.edu, or .lis from Curves+) or (iii) the .pdb atomic coordinates of the protein-DNA complex if the software x3dna is installed on the computer and accessible in the path from the current directory.
+
+3. PDB file: PDB file corresponding to the coordinates given in input. This allows threaDNA to extract additional information on the deformation model, in particular the structure resolution. CAUTION: the resulting ID of the structure in the database is taken from the name of the PDB file. 
+
+4. Reference position: Position of the reference nucleotide in the structure (default = central nucleotide). This is useful when combining/comparing models where the protein binds different numbers of DNA bases: you should then set a reference to align the binding profiles, for instance the index of a basepair that contacts a given protein residue. Typically, for the nucleosome it is the dyad basepair.
+
+
+-----
+
+
+**Recommendation for the input**
+ 
+1. If you are analyzing a protein present in the NDB database, use the option (i) BUT CHECK THAT ALL BASEPAIRS ARE PRESENT IN THE LISTS on the server, as there are sometimes missing basepairs, which will result in errors or absurd deformation energies. This happens particularly in the case of extremely distorted DNA oligomers, where it can be difficult to properly define the base reference frames. 
+
+2. If you are analyzing a protein not present or corrupted on the NDB server, download the PDB file and let it run on the Web3DNA webserver to get the .out file. AGAIN, CHECK THAT ALL BASEPAIRS WERE PROPERLY ANALYZED AND ARE PRESENT IN THE LIST. 
+
+3. If it does not work or you want to include several structures, contact the authors for help. 
+	</help>
+
+
+</tool>

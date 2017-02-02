@@ -1,0 +1,65 @@
+<tool id="calculate_energy_1" name="Calculate energy" version="0.1.0">
+	<description>Calculate energy</description>
+
+  <command interpreter="bash">
+		calculate_energy_wrapper.sh $output_galaxy $input_sequence $input_config
+	</command>
+	
+  <inputs>
+  	<param format="fasta" name="input_sequence" type="data" label="Input FASTA sequence file"/>
+  	<param format="in" name="input_config" type="data" label="Open config file"/>
+  </inputs>
+
+	<outputs>
+		<data format="bed" name="output_galaxy"/>
+	</outputs>
+	
+	<test>
+		<param name="input_sequence" value="sequence_courte.fasta"/>
+		<param name="input_config" value="fis.in"/>
+		<output name="output_galaxy" file="sequence_courte_fis.bed"/>
+	</test>
+
+	<help>
+**What it does**
+
+The program calculates the DNA deformation energy associated to the binding of a protein, along an input sequence. In the typical case, the protein binds 10-20 basepairs, and the energy profile is computed along a genomic sequence. 
+
+The main program takes the sequence of interest (in the FASTA format) and a configuration file describing the protein-DNA complex model with a few computation parameters. The latter file can be generated in Galaxy with a subprogram or created by hand. 
+IMPORTANT: the model is built from one or several high-resolution structures of the DNA-protein complex of interest: before any calculation can be carried out, these structures must first be incorporated into the program database with the dedicated subprogram (add_structure). This step must done only once for each structure. 
+
+The calculation is based on the hypothesis that the protein imposes DNA's shape at the nanometer-scale. The bending energy is then calculated from the deformed configuration, using the sequence-dependent structure/elastic parameters for the internal base-pair or the base-pair step deformations. For proteins where several alternate structures are available (typically obtained with different DNA sequences), these can be combined in the calculation: for a given sequence, DNA then "chooses" the weight of each  conformation from the different Boltzmann weights. 
+
+Computational requirements: the computation time and memory load are proportional to the analyzed sequence length and number of protein-bound nucleotides. For a single protein-DNA complex analyzed, the computation typically takes ~ 200 sec and lower 1Gb RAM for a 10 Mb sequence.
+
+
+-----
+
+
+**Dataset formats**
+
+Computes an energy profile along a sequence
+Usage:
+- sequence_file: FASTA format
+- conf_file: description of the calculation parameters: each line is made of a keyword and a value, separated by ":". See software help for complete list of keywords. The file can be generated in a Galaxy subprogram. 
+
+
+-----
+
+
+**Output format**
+
+Bedgraph file with 5 columns:
+
+1. Name of the sequence(s) (better use short names to reduce file size)
+2. Position of the protein-bound reference nucleotide
+3. Position of the protein-bound reference nucleotide
+4. Deformation energy (in a.u. or pseudo k_B T)
+
+Additional columns:
+
+1. Starting nucleotide of the bound protein
+2. Ending nucleotide of the bound protein
+	</help>
+
+</tool>
