@@ -1,0 +1,8 @@
+Parameters files: 
+each file is a NumPy compressed array file containing two arrays accessible with the following keys:
+- "m" contains the array of average conformations, i.e. N*6 dimensions
+- "s" contains the array of stiffness values, i.e. N*6*6 dimensions
+Here N is the number of unique sequences of the considered parameter set: 10 for dinucleotides, 136 for tetranucleotides...
+The list is in alphabetical order, as can be found in the lists contained in the util.py sheet used by the main program
+The units are angstroms and degrees for the average value, and in reduced units for the stiffness in order to avoid considerable numerical variations between coefficients. The factors used for adimensional units are given in globvar.py (adim). 
+"stiff_temp" correspond to the entropic contribution to the equilibrium and stiffness, and are used to estimate the temperature dependence of mechanical energy (see Meyer et al, Bioph. J. 2013)
