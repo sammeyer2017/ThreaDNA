@@ -1,0 +1,20 @@
+<tool id="occupancy" name="Occupancy" version="0.1.0">
+	<description>Occupancy</description>
+
+  <command interpreter="bash">
+	occupancy_wrapper.sh 
+	$output_galaxy 
+	$input_threadna_results 
+	$input_temperature 
+  </command>
+	
+  <inputs>
+  	<param name="input_threadna_results" type="data" label="Input the .bed file, result of threadna"/>
+	<param name="input_temperature" type="text" value="0.3" label="Temperature"/>
+  </inputs>
+
+  <outputs>
+	<data format="bed" name="output_galaxy"/>
+  </outputs>
+	
+</tool>

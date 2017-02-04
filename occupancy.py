@@ -19,9 +19,9 @@ def main(args):
 
     
     # --- compute occupancy profile
-    en=np.loadtxt(args.inf,skiprows=1,usecols=(1,2,3,4,5))
+    en=np.loadtxt(args.inf,skiprows=1,usecols=(1,2,3))
     occprof=occ(en[:,2],args.efftemp)
-    tab=np.vstack((en[:,(0,1)].T,[occprof],en[:,(3,4)].T)).T
+    tab=np.vstack((en[:,(0,1)].T,[occprof])).T
     
     # --- read name of chromosome
     a=open(args.inf,"r")
@@ -32,16 +32,17 @@ def main(args):
 
     # --- write output file
     if float(np.__version__[:3])>=1.7:
-        np.savetxt(outputf, tab, fmt=se+'\t%d\t%d\t%.3f\t%d\t%d', header='track type=bedGraph name=\"relative occupancy (a. u.)\"',comments="")
+        np.savetxt(outputf, tab, fmt=se+'\t%.1f\t%.1f\t%.3f', header='track type=bedGraph name=\"relative occupancy (a. u.)\"',comments="")
     else:
-        np.savetxt(outputf, tab, fmt=se+'\t%d\t%d\t%.3f\t%d\t%d')#,header='track type=bedGraph name=\"raw binding free energy (k_B T)\"')
+        np.savetxt(outputf, tab, fmt=se+'\t%.1f\t%.1f\t%.3f')#,header='track type=bedGraph name=\"raw binding free energy (k_B T)\"')
         os.system(r"sed -i -e '1itrack type=bedGraph name=\"relative occupancy (a. u.)\"\' %s"%outputf)
 
 
     # ---- optional: coverage
     if args.coverage!=None:
+	print args.coverage
         covprof=np.convolve(occprof,np.ones(int(args.coverage))/int(args.coverage),"same")
-        tab=np.vstack((en[:,(0,1)].T,[covprof],en[:,(3,4)].T)).T
+        tab=np.vstack((en[:,(0,1)].T,[covprof])).T
         # cov output file: 
         if args.output==None:
             covoutput=args.inf.split(".")[0]+"_cov.bed"
@@ -49,9 +50,9 @@ def main(args):
             covoutput=args.output.split(".")[0]+"_cov.bed"
         # export
         if float(np.__version__[:3])>=1.7:
-            np.savetxt(covoutput, tab, fmt=se+'\t%d\t%d\t%.3f\t%d\t%d', header='track type=bedGraph name=\"relative coverage (a. u.)\"',comments="")
+            np.savetxt(covoutput, tab, fmt=se+'\t%.1f\t%.1f\t%.3f', header='track type=bedGraph name=\"relative coverage (a. u.)\"',comments="")
         else:
-            np.savetxt(covoutput, tab, fmt=se+'\t%d\t%d\t%.3f\t%d\t%d')#,header='track type=bedGraph name=\"raw binding free energy (k_B T)\"')
+            np.savetxt(covoutput, tab, fmt=se+'\t%.1f\t%.1f\t%.3f')#,header='track type=bedGraph name=\"raw binding free energy (k_B T)\"')
             os.system(r"sed -i -e '1itrack type=bedGraph name=\"relative coverage (a. u.)\"\' %s"%covoutput)
     # ----------------------
 
