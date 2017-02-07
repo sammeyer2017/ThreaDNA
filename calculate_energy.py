@@ -113,15 +113,15 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
             posref=posraw+startoff[k]+(n-1)/2
         if float(np.__version__[:3])>=1.7:
             # directly export file with header
-            np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f',header='track type=bedGraph name=\"binding free energy (a. u.)\"',comments="")
+            np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
         else:
             # export file and add header afterwards
             np.savetxt(name, np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f')
-            os.system(r"sed -i -e '1itrack type=bedGraph name=\"binding free energy (a. u.)\"\' %s"%name)
+            os.system(r"sed -i -e '1itrack type=bedGraph name=\"binding free energy (a. u.)\"' %s"%name)
     else:
         # several sequences
         f=open(name,"w")
-        f.write('track type=bedGraph name=\"raw binding free energy (k_B T)\"\n') #bed header
+        f.write('track type=bedGraph name="raw binding free energy (k_B T)"\n') #bed header
         k=0
         while k<len(seqn):
             j=0
@@ -190,10 +190,10 @@ def writenorm_old(y,m,n,name,P,pos,off,struct,sym,al,start,end):
     while i<len(P)/(1+sym): #protein structure
         j=0
         f=open(struct[i]+"_norm.bed","w")
-        f.write('track type=bedGraph name=\"normalized binding free energy (a.u.)\"\n') #bed header
+        f.write('track type=bedGraph name="normalized binding free energy (a.u.)"\n') #bed header
         if sym:
             f2=open(struct[i]+"_rev_norm.bed","w")
-            f2.write('track type=bedGraph name=\"normalized binding free energy (a.u.)\"\n') #bed header
+            f2.write('track type=bedGraph name="normalized binding free energy (a.u.)"\n') #bed header
         while j<np.shape(y)[0]:  #DNA sequence
             k=0
             while k<end[j]-start[j]:  #position on sequence
@@ -253,7 +253,8 @@ def profile(E,p,m,n,name,P,pos,mi,s,al,start,end): #calculates global profile fr
         z=[np.log(sum(np.exp(-b*E)))/-b for E in E2]
         writeseqE(z,m,name)
     writeprofile(name,E2,P,m,p.get("Offset"),n,pos=pos,start=start) #write final profile
-
+    print "Final profile written in file %s"%name
+    return 0
 
 
     
@@ -276,7 +277,8 @@ def main(fasta,params,output):
     if output!="None":
         name=output
     else:
-        name=fasta.split("/")[-1].split(".")[0]+"_"+params.split("/")[-1].split(".")[0]+".bed" #output file
+        # save in directory of sequence
+        name=fasta.split(".")[0]+"_"+params.split("/")[-1].split(".")[0]+".bed" #output file
     seqs_tmp=np.array([[ind[s[j:j+n]] for j in range(len(s)-n+1)] for s in seq],dtype=np.uint8)
     # --------- HANDLING OF SUPERCOILING ----------------------- #
     if supercoiling != 0.:
