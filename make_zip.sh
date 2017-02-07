@@ -5,3 +5,4 @@ cp -r add_structure.py calculate_energy.py DNApp.py exec.sh globvar.py INSTALL R
 chmod u+x threadna_install/INSTALL
 chmod u+x threadna_install/exec.sh
 zip -r threadna_install.zip threadna_install
+rm -rf threadna_install
