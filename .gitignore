@@ -1,4 +1,5 @@
 *.pyc
 sequence_courte_crp.bed
+sequence_courte_crp_occ.bed
 threadna
 add_structure_wrapper.sh.bak
