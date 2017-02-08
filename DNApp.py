@@ -168,7 +168,7 @@ class Dnapp(Tk):
         lid.grid(column=0,row=5,sticky='NW')
         eid=Entry(self.cfgpan,textvariable=self.ida)
         eid.grid(column=1,row=5,sticky='EW')
-        NDBh=Label(self.cfgpan,text="Provide the 6-character ID of the structure in the\nNDB database or a base-pair (step) coordinate file,\nfrom software 3DNA (.out) or Curves+ (.lis).\nCAUTION: check that no basepair is missing!")
+        NDBh=Label(self.cfgpan,text="Provide ID of the structure in the NDB database. \nOtherwise, a base-pair (step) coordinate file,\nfrom software 3DNA (.out) or Curves+ (.lis).\nCAUTION: check that no basepair is missing!")
         NDBh.grid(column=2,row=4,rowspan=3,sticky='EW')
         opstruc = Button(self.cfgpan,text=u"or open coord file",command=self.open_struc)
         opstruc.grid(column=0,row=6,sticky='NW')
@@ -485,8 +485,8 @@ class Dnapp(Tk):
             self.create.config(state='disabled')
 
     def launch_calc(self):
-        calc.main(unicode(self.fasta),unicode(self.cnf),"None")
-        tkMessageBox.showinfo("Execution completed","Computation of energy profile is completed")
+        os.system("python calculate_energy.py %s %s"%(unicode(self.fasta),unicode(self.cnf)))
+        tkMessageBox.showinfo("Execution completed","Computation of energy profile is completed. Result file in %s"%self.fasta.split('.')[0]+"_"+self.cnf.split("/")[-1].split(".")[0]+".bed")
 
     def add_struct(self):
         ref=self.ref.get()
@@ -512,7 +512,7 @@ class Dnapp(Tk):
             os.system("python occupancy.py -t %s %s"%(unicode(self.efftemps.get()),unicode(self.inf)))
         else:
             os.system("python occupancy.py -t %s -cov %s %s"%(unicode(self.efftemps.get()),unicode(self.coverages.get()),unicode(self.inf)))
-        tkMessageBox.showinfo("Execution successful","Occupancy subprogram execution completed. The result will be written in the files %s"%(self.inf.split(".")[0]+"_[occ/cov].bed"))
+        tkMessageBox.showinfo("Execution successful","Occupancy subprogram execution completed. The result files are %s"%(self.inf.split(".")[0]+"_[occ/cov].bed"))
 
 
     def open_struc(self):

@@ -32,15 +32,16 @@ def main(args):
 
     # --- write output file
     if float(np.__version__[:3])>=1.7:
-        np.savetxt(outputf, tab, fmt=se+'\t%.1f\t%.1f\t%.3f', header='track type=bedGraph name=\"relative occupancy (a. u.)\"',comments="")
+        np.savetxt(outputf, tab, fmt=se+'\t%.1f\t%.1f\t%.3f', header='track type=bedGraph name="relative occupancy"',comments="")
     else:
-        np.savetxt(outputf, tab, fmt=se+'\t%.1f\t%.1f\t%.3f')#,header='track type=bedGraph name=\"raw binding free energy (k_B T)\"')
-        os.system(r"sed -i -e '1itrack type=bedGraph name=\"relative occupancy (a. u.)\"\' %s"%outputf)
+        np.savetxt(outputf, tab, fmt=se+'\t%.1f\t%.1f\t%.3f')#,header='track type=bedGraph name="raw binding free energy (k_B T)"')
+        os.system(r"sed -i -e '1itrack type=bedGraph name=\"relative occupancy\"' %s"%outputf)
+    print "Occupancy profile written in %s"%outputf
 
 
     # ---- optional: coverage
     if args.coverage!=None:
-	print args.coverage
+	# print args.coverage
         covprof=np.convolve(occprof,np.ones(int(args.coverage))/int(args.coverage),"same")
         tab=np.vstack((en[:,(0,1)].T,[covprof])).T
         # cov output file: 
@@ -50,11 +51,12 @@ def main(args):
             covoutput=args.output.split(".")[0]+"_cov.bed"
         # export
         if float(np.__version__[:3])>=1.7:
-            np.savetxt(covoutput, tab, fmt=se+'\t%.1f\t%.1f\t%.3f', header='track type=bedGraph name=\"relative coverage (a. u.)\"',comments="")
+            np.savetxt(covoutput, tab, fmt=se+'\t%.1f\t%.1f\t%.3f', header='track type=bedGraph name="relative coverage"',comments="")
         else:
-            np.savetxt(covoutput, tab, fmt=se+'\t%.1f\t%.1f\t%.3f')#,header='track type=bedGraph name=\"raw binding free energy (k_B T)\"')
-            os.system(r"sed -i -e '1itrack type=bedGraph name=\"relative coverage (a. u.)\"\' %s"%covoutput)
-    # ----------------------
+            np.savetxt(covoutput, tab, fmt=se+'\t%.1f\t%.1f\t%.3f')#,header='track type=bedGraph name="raw binding free energy (k_B T)"')
+            os.system(r"sed -i -e '1itrack type=bedGraph name=\"relative coverage\"' %s"%covoutput)
+        print "Coverage profile written in %s"%covoutput
+        # ----------------------
 
     return 0
 
