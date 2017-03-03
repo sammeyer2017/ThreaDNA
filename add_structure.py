@@ -137,12 +137,16 @@ def std_params(f,Qi,Qs):
         f.write(ca+"    "+str([np.mean(Et,dtype=np.float128),np.std(Et,dtype=np.float128)])+"\n")
 
 def getNDBid(id,out): #Get the NDB ID to PDB ID
-    url=urllib2.urlopen('http://www.rcsb.org/pdb/explore/explore.do?structureId='+id.lower()+'') # PDB url of the protein
-    ndbURL='<a href="http://ndbserver.rutgers.edu/service/ndb/atlas/summary?searchTarget='+id.lower()+'"' # NDB reference to find in PDB file
+    print "Requesting 'http://www.rcsb.org/pdb/explore/explore.do?structureId="+id.lower()
+    url=urllib2.urlopen('http://www.rcsb.org/pdb/explore/explore.do?structureId='+id.lower()) # PDB url of the protein
+    pattern='href="http://ndbserver.rutgers.edu/service/ndb/atlas/summary?searchTarget='
     ip = url.read()
-    for line in ip:
-      if ndbURL in line:
-	ndbURL=line
+    ndbURL=None
+    
+    for line in ip.split('\n'):
+      if pattern in line:
+        ndbURL=line
+    
     if not ndbURL: 
       sys.exit("There is not a NDB ID associated to the PDB ID")
     ndbURL=ndbURL.split('=')
@@ -178,8 +182,8 @@ def getPDBfile(id,name):
     url='https://files.rcsb.org/download/'+id.lower()+'.pdb'
     if not url:
       sys.exit("ID not found in PDB")
-    out=outDirectory(id,name)
-    print "Downloading the PDB file"
+    out=outDirectory(id,name)+id
+    print "Downloading the PDB file" + url
     PDBfile = urllib2.urlopen(url)
     data = PDBfile.read()
     with open(out+".pdb", "wb") as code:
@@ -209,8 +213,8 @@ def main(name,f,pdb=None,ref=None):
     ext=f.split(".")
 
     if len(ext)==1: # ! no file info
-	out=getPDBfile(name,f)
-	Qi,Qs=getNDBid(f[:-4],out)
+	out=getPDBfile(f,name)
+	Qi,Qs=getNDBid(f,out)
 
     elif ext[-1]=="pdb":
 	out=getInfoPDBfile(f,name)
