@@ -138,7 +138,7 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
                 j+=1
             k+=1                        
         f.close()
-
+    return 0
         
 
 def align(E,al,full,seqn): #align several sequences from different lengths
@@ -212,6 +212,7 @@ def writenorm_old(y,m,n,name,P,pos,off,struct,sym,al,start,end):
         if sym:
             f2.close()
         i+=1
+    return 0
 
 def writeseqE(E,seq,name):
     f=open(name.split(".")[0]+"_seq.bed","w")
@@ -221,6 +222,27 @@ def writeseqE(E,seq,name):
         f.write(seq[i]+"\t"+str(E[i])+"\n")
         i+=1
     f.close()
+    
+
+def combinematrix(Emat,p,mi,s):
+    sym=(p["Symmetrization"]=="Yes")
+    try:
+        b=1/float(p["Temperature factor"])
+    except:
+        b=1.
+    if len(mi)==(1+sym):
+        si=np.array(s,dtype=np.float64) #unique structure correction
+    else:
+        si=np.array(s*np.std(mi/s,ddof=1,dtype=np.float64)) #unique structure correction
+    if len(si.shape)==1:
+        si=np.reshape(si,(-1,1))
+    # print np.shape(Emat),np.shape(si),np.shape(mi)
+    # print Emat[0,0]
+    si=np.reshape(si,(2,1,1))
+    Emat=np.divide(Emat,si,dtype=np.float64)
+    Emat2=np.log(np.sum(np.exp(-b*Emat),0))/-b
+    # print Emat2[0]             
+    return Emat2
 
 def profile(E,p,m,n,name,P,pos,mi,s,al,start,end): #calculates global profile from structures profiles
     sym=(p["Symmetrization"]=="Yes")
@@ -230,20 +252,19 @@ def profile(E,p,m,n,name,P,pos,mi,s,al,start,end): #calculates global profile fr
         b=1.
     E2,w,z=[],[],[]
     i=0
-    while i<len(E):   #DNA sequences
-        if len(mi)==(1+sym):
-            si=np.array(s,dtype=np.float64) #unique structure correction
-        else:
-            si=np.array(s*np.std(mi/s,ddof=1,dtype=np.float64)) #unique structure correction
-        if len(si.shape)==1:
-            si=np.reshape(si,(-1,1))
+    if len(mi)==(1+sym):
+        si=np.array(s,dtype=np.float64) #unique structure correction
+    else:
+        si=np.array(s*np.std(mi/s,ddof=1,dtype=np.float64)) #unique structure correction
+    if len(si.shape)==1:
+        si=np.reshape(si,(-1,1))
+    while i<len(E):   #DNA-prot structures
         y=np.divide(E[i],si,dtype=np.float64) #corrected profiles by structure
-        w.append(np.exp(-b/si)) #weights computation
-        z.append(y)
-        y=np.log(np.sum(np.exp(-b*y),0))/-b #final profile computation from structure profiles
         if np.isnan(y).any():
             sys.exit("nan found while calculating profile")
+        y=np.log(np.sum(np.exp(-b*y),0))/-b #final profile computation from structure profiles
         E2.append(y)
+        w.append(np.exp(-b/si)) #weights computation
         i+=1
     if p.get("Keep Weights")=="Yes" and w: #if weights are available
         writeweights(w,name,m,p["Structures"],p["Symmetrization"]=="Yes")  #save weights
@@ -257,8 +278,9 @@ def profile(E,p,m,n,name,P,pos,mi,s,al,start,end): #calculates global profile fr
     return 0
 
 
+
     
-def main(fasta,params,output):
+def main(params,sequence,output):
     t=time.time() #get program starting time
     print "Initializing..."
     # -------------------------------------------------
@@ -272,13 +294,19 @@ def main(fasta,params,output):
     except:
         supercoiling=0.
     # ---------------------------------------------------
-    # sequence
-    seq,seqn=read_fasta2(fasta) #load fasta squences from file
-    if output!="None":
-        name=output
+    # sequence and output handling
+    # ---------------------------------------------------
+    fasta=sequence
+    if fasta!="None":
+        seq,seqn=read_fasta2(fasta) #load fasta squences from file
+        if output!="None":
+            name=output
+        else:
+            # save in directory of sequence
+            name=fasta.split(".")[0]+"_"+params.split("/")[-1].split(".")[0]+".bed" #output file
     else:
-        # save in directory of sequence
-        name=fasta.split(".")[0]+"_"+params.split("/")[-1].split(".")[0]+".bed" #output file
+        seq,seqn=read_fasta2(loc+"structures/standard.fa")
+    namemat=name.split(".")[0]+"_en.pwm" #output file
     seqs_tmp=np.array([[ind[s[j:j+n]] for j in range(len(s)-n+1)] for s in seq],dtype=np.uint8)
     # --------- HANDLING OF SUPERCOILING ----------------------- #
     if supercoiling != 0.:
@@ -297,19 +325,25 @@ def main(fasta,params,output):
         # print dq0/q0
         # update the value of q0
         q0+=dq0
-    # ---------------------------------------------------------- # 
-    #  Main calculation 
+    # ---------------------------------------------------------- 
+    #  Main calculation
+    # ----------------------------------------------------------
     if p["Keep tmp"]=="Yes" and not os.path.exists(name+"_tmp"):
-        os.mkdir(name+"_tmp")
-    Et,a_rev=[],None
+        if fasta!="None":
+            os.mkdir(name+"_tmp")
+        os.mkdir(namemat+"_tmp")
+    Et,Emat,a_rev=[],[],None
     pos,pos_r=0,0
     for i,s in enumerate(p["Structures"]): #calculates E for each structure
         q=read_q(p["Protein"],s,p["DNA parameter"],loc,P,p.get("Offset"),al[i]) #unit conversion and data completion for q
         E=calc_E(q,q0,K) #energy for each set of nucleotides
+        Emat.append(E)   # list of matrices for each set of nucleotides
+        if p["Keep tmp"]=="Yes":
+            writepwm(E,ind,namemat+"_tmp/"+s+".pwm")
         try:
             p["Offset"]=int(p["Offset"])
         except:
-            p["Offset"]=(np.shape(q)[0]+2-(p["DNA parameter"]=="ABCi"))/2
+            p["Offset"]=(np.shape(q)[0]+2-(p["DNA parameter"]=="ABC_i"))/2
         if p["Pattern"]: #uses pattern finding and short sequences energy calculating function
             print "Calculating Energy on patterns for structure "+s
             Etmp,pt,sm=E_seq(E,seq,seqn,ind,n,name+"_tmp/"+s+".bed",p["Keep tmp"]=="Yes",p["Pattern"],P,p["Offset"])
@@ -344,6 +378,8 @@ def main(fasta,params,output):
                 else:
                     Etmp,sm=E_tot(E,seqs_tmp,seqn,ind,n,name+"_tmp/"+s+"_rev.bed",p["Keep tmp"]=="Yes",P-p["Offset"]+2-n%2,P)
                     Et.append(Etmp)
+    # -------------------------------
+    # combination of structures
     print "Calculation : "+str(time.time()-t) #displays the total calculation time
     if type(P)==int:
         al=np.array([p["Offset"]]*len(p["Structures"]))
@@ -351,9 +387,13 @@ def main(fasta,params,output):
         mi=np.reshape([x for pair in zip(mi,mi) for x in pair],-1)
         si=np.reshape([x for pair in zip(si,si) for x in pair],-1)
         al=np.reshape([x for pair in zip(al,P-al+2-n%2) for x in pair],-1)
-    Et,start,end=align(Et,al,not p["Pattern"],seqn) #structures alignment
-    profile(Et,p,seqm,n,name,P,pos,mi,si,al,start,end)
-    print "Global profile built !"
+    Ematf=combinematrix(np.array(Emat),p,mi,si)
+    print "Writing position-weight-matrix in file %s"%namemat
+    writepwm(Ematf,ind,namemat)
+    if fasta!="None":
+        Et,start,end=align(Et,al,not p["Pattern"],seqn) #structures alignment
+        profile(Et,p,seqm,n,name,P,pos,mi,si,al,start,end)
+        print "Global profile built !"
     print "Execution time :"+str(time.time()-t) #prints total exeution time
     sys.exit(0)
 
@@ -362,10 +402,10 @@ def main(fasta,params,output):
     
 loc=os.path.abspath(os.path.dirname(sys.argv[0])).decode('utf8')+u"/" #saving exec. dir
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Computes the DNA deformation energy profile for a DNA-binding protein model along a DNA sequence, taking into account the base-pair or base-pair-step deformations.') #argument parser and help
-    parser.add_argument('fasta',type=str,help='FASTA file containing DNA sequence(s)')
+    parser = argparse.ArgumentParser(description='Computes the DNA deformation energy profile for a DNA-binding protein model along a DNA sequence or creates a position weight matrix file, taking into account the base-pair or base-pair-step deformations.') #argument parser and help
     parser.add_argument('params', type=str,help='Parameter file describing the protein model and computation parameters')
-    parser.add_argument("-o","--output",type=str,action="store",help="Name of .bed output file")
+    parser.add_argument("-s","--sequence",type=str,help='FASTA file containing DNA sequence(s)')
+    parser.add_argument("-o","--output",type=str,action="store",help="Name of .bed/.dpwm output file")
     args=parser.parse_args()
-    main(unicode(args.fasta),unicode(args.params),unicode(args.output)) #executes program
+    main(unicode(args.params),unicode(args.sequence),unicode(args.output)) #executes program
 
