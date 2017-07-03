@@ -11,11 +11,20 @@ from Bio import motifs
 jdel="\t"
 
 
-def writepwm(Emat,ind,filename):
+def get_aligned_sequences(aligned_sequence_file):
+    try: 
+        seqs=SeqIO.parse(aligned_sequence_file,"fasta")
+    except:
+        l=open(aligned_sequence_file,"r")
+        li=[x.split("\n")[0] for x in l.readlines()]
+        l.close()
+        return li
+
+def writepwm(mat,ind,filename):
     """
-    Saves a PWM matrix into a textfile of PSSM format. 
-    Caution: here the saved matrix contains the ELASTIC ENERGY associated to each sequence, not the frequency. The unit is arbitrary. An energy scale must then be used to get an absolute frequency. 
-    Params: Matrix of energy (nb_elements_in_prot x all_possible_nucl) or proba; dictonary of sequences_indexes; filename
+    Saves a PWM matrix into a textfile of PSSM format.
+    It may be an ENERGY matrix (as provided by ThreaDNA) or a PROBABILITY matrix (or whatever other quantity, log-odds etc but we don't use it for the moment). In the latter case, the sum of each column is 1. 
+    Params: Matrix (nb_elements_in_prot x all_possible_nucl) or proba; dictonary of sequences_indexes; filename
     """
     initseqs=ind.keys()
     inds=ind.values()
@@ -26,7 +35,7 @@ def writepwm(Emat,ind,filename):
     f.write(">%s\n"%(filename.split("/")[-1].split(".")[0]))
     for i,s in enumerate(nis):
         f.write("%s\t["%s)
-        for x in Emat.T[ind[s]]:
+        for x in mat.T[ind[s]]:
             f.write("%s%.3f"%(jdel,x))
         f.write("%s]\n"%jdel)
     f.close()
@@ -134,9 +143,9 @@ def make_and_plot_proba_matrices_from_energ_PWM(filename, b=1., plot=True):
     # plot the matrix
     if plot:
         mmf2=filename.split(".")[0]+"_mono2.pwm"
-        writepwm(10000*mmat,mind,mmf2)
+        writepwm(100*mmat,mind,mmf2)
         plot_PWM(mmf2)
-        os.system("rm %s"%mmf2)
+        #os.system("rm %s"%mmf2)
     return 0
 
 
@@ -147,8 +156,17 @@ def seq_indexes_from_ind(seqs, ind):
     dinucl=len(ind.keys()[0])
     return np.array([[ind[s[j:j+dinucl]] for j in range(len(s)-dinucl+1)] for s in seqs],dtype=np.uint8)
 
+def compute_energies_from_energ_mat(seqs, pmat, ind):
+    e=[]
+    P=# protein size ???
+    for i,s in enumerate(seqs):
+        E_tmp=np.zeros(len(seq_tmp)-P+1,dtype=np.float32)
+        while j<P: #loop on protein positions
 
-def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_energy_PWM=None, b=1., protsize=None):
+
+            
+
+def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_energy_PWM=None, b=1., protsize=None, filename=None):
     """
     Takes in a fasta file containing the aligned sequences for PWM, and the indirect (dinuc) PWM. 
     The latter can be given either as an energy matrix such as given by the main ThreaDNA program, or as a probability matrix. In the former case, an energy scale (beta factor) can be given. 
@@ -157,17 +175,21 @@ def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_
     CAUTION: the alignments MUST MATCH, i.e. the centers of the sequences must also be the center of the provided PWM. i.e. without protsize, all sequences must have the length of indirect_proba_PWM + 1. 
     """
     # get sequences
-    seqs=SeqIO.parse(aligned_sequence_file,"fasta")
+    seqs=get_aligned_sequences(aligned_sequence_file)
+    print seqs
     # get probability PWM, or compute it from energy PWM
-    if indirect_proba_PWM is not None:
-        ind, mat = load_PWM(indirect_proba_PWM)
-    elif indirect_proba_PWM is not None:
-        ind, emat = load_PWM(indirect_energy_PWM)
+    if indirect_proba_PWM != None:
+        ind, mat = load_pwm(indirect_proba_PWM)
+    elif indirect_energy_PWM != None:
+        ind, emat = load_pwm(indirect_energy_PWM)
         mat=energ_pwm_to_proba_PWM(emat,ind,b)
     else:
         print "You must provide either a probability matrix or an energy matrix"
         return 1
     totlen=len(mat)
+    # output name
+    if filename is None:
+        filename=indirect_proba_PWM.split(".")[0]+"_with_"+aligned_sequence_file.split("/")[-1].split(".")[0]
     # -----------------------------------------
     # compute the matrix part and the sequence length that we must incorporate
     if protsize is None:
@@ -186,12 +208,31 @@ def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_
         mid=l/2.
         seqlist.append(s[(int(mid-seqlen/2.)):(int(mid+seqlen/2.))])
     mid=(protsize-1)/2.
-    pmat=mat[(int(mid-(protsize-1)/2.)):(int(mid+(protsize-1)/2.))]
+    pmat_indir=mat[(int(mid-(protsize-1)/2.)):(int(mid+(protsize-1)/2.))]
     # -------------------------------------------
     # compute dinuc sequences
     inds_in_fasta=seq_indexes_from_ind(seqlist, ind) # inds_in_fasta has EXACTLY the same size as pmat
-    
-    
+    freqmat=np.zeros((matlen,len(ind.keys())))
+    for li in inds_in_fasta:
+        for ix,x in enumerate(li):
+            freqmat[ix,x]+=1
+    freqmat/=float(len(seqlist))
+    if np.max(np.sum(freqmat,axis=1))>1.000001:
+        print "ERROR: probabilities do not count to 1 in matrix: %s"%str(freqmat)
+    # freqmat is the observed PWM, with the sum of energies
+    # probabilities are multiplied :
+    pmat_dir=freqmat/pmat_indir
+    pmat_dir/=np.sum(pmat_dir,axis=1,keepdims=True)
+    pwm_dir=dinuc_PWM_to_mononuc(pmat_dir, ind)
+    mind=dict([(b,i) for i,b in enumerate(bases)])
+    # --------------------------------------------
+    writepwm(pmat_indir, ind, filename+"_ind.pwm")
+    writepwm(pmat_dir, ind, filename+"_dir_dinuc.pwm")
+    writepwm(pwm_dir, mind, filename+"_dir.pwm")
+    return 0
+
+
+compute_direct_PWM("CRP_seqs.fasta", indirect_proba_PWM=None, indirect_energy_PWM="test_CRP_en.pwm", b=14., protsize=22, filename="bla")
     
     
 
@@ -200,7 +241,7 @@ def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_
 
 
 #ind, mmat = load_pwm("test_CRP.pwm")
-make_and_plot_proba_matrices_from_energ_PWM("test_CRP.pwm", b=14.3, plot=True)
+#make_and_plot_proba_matrices_from_energ_PWM("test_CRP.pwm", b=14.3, plot=True)
 
 
 # see STAMP motifs for checking !!!

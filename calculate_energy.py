@@ -305,6 +305,10 @@ def main(params,sequence,output):
             # save in directory of sequence
             name=fasta.split(".")[0]+"_"+params.split("/")[-1].split(".")[0]+".bed" #output file
     else:
+        if output!="None":
+            name=output
+        else:
+            name=params.split(".")[0]+".bed"
         seq,seqn=read_fasta2(loc+"structures/standard.fa")
     namemat=name.split(".")[0]+"_en.pwm" #output file
     seqs_tmp=np.array([[ind[s[j:j+n]] for j in range(len(s)-n+1)] for s in seq],dtype=np.uint8)
@@ -328,10 +332,12 @@ def main(params,sequence,output):
     # ---------------------------------------------------------- 
     #  Main calculation
     # ----------------------------------------------------------
-    if p["Keep tmp"]=="Yes" and not os.path.exists(name+"_tmp"):
-        if fasta!="None":
+    if p["Keep tmp"]=="Yes":# and not os.path.exists(name+"_tmp"):
+        try:
             os.mkdir(name+"_tmp")
-        os.mkdir(namemat+"_tmp")
+            os.mkdir(namemat+"_tmp")
+        except:
+            print "tmp directories already exist"
     Et,Emat,a_rev=[],[],None
     pos,pos_r=0,0
     for i,s in enumerate(p["Structures"]): #calculates E for each structure

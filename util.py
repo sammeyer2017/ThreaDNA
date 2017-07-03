@@ -250,7 +250,7 @@ def calc_E(q,q0,K): #energy calculation by nucleotide combination
 def writepwm(Emat,ind,filename):
     """
     Saves a PWM matrix into a textfile of PSSM format. 
-    Caution: here the saved matrix contains the ELASTIC ENERGY associated to each sequence, not the frequency. The unit is arbitrary. An energy scale must then be used to get an absolute frequency. 
+    Caution: in the main ThreaDNA program, the saved matrix contains the ELASTIC ENERGY associated to each sequence, not the frequency. The unit is arbitrary. An energy scale must then be used to get an absolute frequency. 
     Params: Matrix of energy (nb_elements_in_prot x all_possible_nucl); dictonary of sequences_indexes; filename
     The lowest value of the matrix is arbitrarily set to 0. 
     """
