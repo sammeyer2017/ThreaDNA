@@ -4,7 +4,7 @@ from globvar import *
 #from util import *
 import numpy as np
 import os
-from Bio import motifs
+from Bio import motifs,SeqIO
 
 
 # --------- JASPAR delimiter
@@ -16,13 +16,15 @@ def get_aligned_sequences(aligned_sequence_file):
     reads sequence file in fasta format or list of sequences, and returns the list of sequences with names
     """
     try: 
-        seqs=SeqIO.parse(aligned_sequence_file,"fasta")
-        li=[(s.Seq,s.name) for s in seqs]
+        seqs=list(SeqIO.parse(aligned_sequence_file,"fasta"))
+        li=[str(s.seq) for s in seqs]
+        names=[s.id for s in seqs]
     except:
         l=open(aligned_sequence_file,"r")
-        li=[(x.split("\n")[0],'') for x in l.readlines()]
+        li=[x.split("\n")[0] for x in l.readlines()]
+        names=["" for s in li]
         l.close()
-        return li
+    return li,names
 
 def writepwm(mat,ind,filename):
     """
@@ -59,7 +61,7 @@ def load_pwm(filename):
     for l in ls:
         if l[0]!=">":
             q=l.split(jdel)
-            le=len(q)-3
+            le=len(q)
             seqs.append(q[0])
             if q[1]!="[":
                 print "problem: wrong file format: line %s"%l
@@ -118,7 +120,7 @@ def plot_PWM(filename,output=None):
     The output must be given as the name of a PDF file, otherwise automatic from the input name
     """
     if output is None:
-        output=filename.split(".")[0]+".pdf"
+        output=filename.split("/")[-1].split(".")[0]+".pdf"
     # Uses WebLogo from BioPython to plot the matrix in pdf format
     # Requires an internet connection
     fh = open(filename)
@@ -160,27 +162,86 @@ def seq_indexes_from_ind(seqs, ind):
     dinucl=len(ind.keys()[0])
     return np.array([[ind[s[j:j+dinucl]] for j in range(len(s)-dinucl+1)] for s in seqs],dtype=np.uint8)
 
+
 def compute_energies_from_energ_mat(seq_inds, pmat, ind):
     """
     makes the computation of energy profile from a matrix: intermediate function
     """
     e=[]
     P=len(pmat) # size of matrix, = size of prot -1 for dinuc, and size of prot for mononuc
-    for i,s in enumerate(seqs):
-        E_tmp=np.zeros(len(seq_tmp)-P+1,dtype=np.float32)
+    for i,s in enumerate(seq_inds):
+        E_tmp=np.zeros(len(s)-P+1,dtype=np.float32)
         for j in range(P): #loop on protein positions
-            E_tmp=np.add(E_tmp,pmat[j,seq_inds[j:len(s)-P+j+1]],dtype=np.float32)
+            E_tmp=np.add(E_tmp,pmat[j,s[j:len(s)-P+j+1]],dtype=np.float32)
         e.append(E_tmp)
     return e
 
-def compute_energy_profiles_from_PWM(fastafile, pwmfile):
+
+def firstind_float(pmat, ind):
+    """
+    gives the first index of the energy value computed along the sequence... in 1-index !!!
+    caution: returns a float
+    """
+    return len(pmat)/2.+len(ind.keys()[0])/2
+
+
+def writeprofile_simple(filename,E,seqnames,firstind): #write temp files by structures in current directory
+    """
+    Write energy profile as a bed file
+    - output filename
+    - list of arrays of energies for different sequences
+    - seqnames 
+    - first index of each energy value: a floating number or an integer
+    """
+    if len(seqnames)==1:   # only one sequence in the fasta file: use Numpy for quicker export if the sequence is very long
+        k=0
+        # simple case: use numpy.savetxt
+        se=seqnames[0]   # chromosome sequence: keep only 24 last chars to make a small file
+        ee=E[k]
+        posref=np.arange(len(ee))+firstind
+        if float(np.__version__[:3])>=1.7:
+            # directly export file with header
+            np.savetxt(filename,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
+        else:
+            # export file and add header afterwards
+            np.savetxt(filename, np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f')
+            os.system(r"sed -i -e '1itrack type=bedGraph name=\"binding free energy (a. u.)\"' %s"%filename)
+    else:
+        # several sequences
+        f=open(filename,"w")
+        f.write('track type=bedGraph name="raw binding free energy (a. u.)"\n') #bed header
+        k=0
+        while k<len(seqnames):
+            j=0
+            se=seqnames[k]
+            ee=E[k]
+            posref=np.arange(len(ee))+firstind
+            while j<len(ee): #writes sequence name, start position, end, position and energies for each energy calculated
+                f.write("%s\t%.1f\t%.1f\t%0.2f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
+                j+=1
+            k+=1                        
+        f.close()
+    return 0
+
+
+def compute_energy_profiles_from_PWM(fastafile, pwmfile, bedname=None):
+    """ 
+    Main function to compute an energy profile from a pwm file... 
+    """
+    if bedname is None:
+        bedname=fastafile.split(".")[0]+'_'+fastafile.split("/")[-1].split(".")[0]+".bed"
     ind, mat = load_pwm(pwmfile)
-    seqs=get_aligned_sequences(fastafile)
+    print np.shape(mat)
+    seqs,names=get_aligned_sequences(fastafile)
+    print seqs,names
     seq_inds=seq_indexes_from_ind(seqs, ind)
-    compute_energies_from_energ_mat(seq_inds, pmat, ind)
+    e=compute_energies_from_energ_mat(seq_inds, mat, ind)
+    fi=firstind_float(mat, ind)
+    writeprofile_simple(bedname,e,names,fi)
+    return 0
 
 
-def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_energy_PWM=None, b=1., protsize=None, filename=None):
+def compute_direct_PWM_from_dinuc_distributions(aligned_sequence_file, indirect_proba_PWM=None, indirect_energy_PWM=None, b=1., protsize=None, filename=None):
     """
     Takes in a fasta file containing the aligned sequences for PWM, and the indirect (dinuc) PWM. 
     The latter can be given either as an energy matrix such as given by the main ThreaDNA program, or as a probability matrix. In the former case, an energy scale (beta factor) can be given. 
@@ -189,7 +250,7 @@ def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_
     CAUTION: the alignments MUST MATCH, i.e. the centers of the sequences must also be the center of the provided PWM. i.e. without protsize, all sequences must have the length of indirect_proba_PWM + 1. 
     """
     # get sequences
-    seqs=get_aligned_sequences(aligned_sequence_file)
+    seqs,names=get_aligned_sequences(aligned_sequence_file)
     print seqs
     # get probability PWM, or compute it from energy PWM
     if indirect_proba_PWM != None:
@@ -246,12 +307,26 @@ def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_
     return 0
 
 
-compute_direct_PWM("CRP_seqs.fasta", indirect_proba_PWM=None, indirect_energy_PWM="test_CRP_en.pwm", b=14., protsize=22, filename="bla")
-    
-    
+
+
+# compute_direct_PWM("CRP_seqs.fasta", indirect_proba_PWM=None, indirect_energy_PWM="test_CRP_en.pwm", b=14., protsize=22, filename="bla")
+# compute_energy_profiles_from_PWM("crp_lindemose.fa", "CRP_en.pwm", bedname="test.bed")
 
 
 
+
+
+
+# -------------- EXECUTION
+   
+#loc=os.path.abspath(os.path.dirname(sys.argv[0])).decode('utf8')+u"/" #saving exec. dir
+# if __name__ == "__main__":
+#     parser = argparse.ArgumentParser(description='Computes the DNA deformation energy profile along a DNA sequence from a position weight matrix file in the JASPAR format, either classical (mononucleotides) or indirect (dinucleotides).') 
+#     parser.add_argument('', type=str,help='Parameter file describing the protein model and computation parameters')
+#     parser.add_argument("-s","--sequence",type=str,help='FASTA file containing DNA sequence(s)')
+#     parser.add_argument("-o","--output",type=str,action="store",help="Name of .bed/.dpwm output file")
+#     args=parser.parse_args()
+#     main(unicode(args.params),unicode(args.sequence),unicode(args.output)) #executes program
 
 
 #ind, mmat = load_pwm("test_CRP.pwm")

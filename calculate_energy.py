@@ -110,7 +110,7 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
             posref=posraw+off
         else:
             posraw=np.arange(len(ee))
-            posref=posraw+startoff[k]+(n-1)/2
+            posref=posraw+startoff[k]+(n+1)/2
         if float(np.__version__[:3])>=1.7:
             # directly export file with header
             np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
@@ -132,7 +132,7 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
                 posref=posraw+off
             else:
                 posraw=np.arange(len(ee))
-                posref=posraw+startoff[k]+(n-1)/2
+                posref=posraw+startoff[k]+(n+1)/2
             while j<len(ee): #writes sequence name, start position, end, position and energies for each energy calculated
                 f.write("%s\t%.1f\t%.1f\t%0.2f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
                 j+=1
