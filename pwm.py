@@ -12,11 +12,15 @@ jdel="\t"
 
 
 def get_aligned_sequences(aligned_sequence_file):
+    """
+    reads sequence file in fasta format or list of sequences, and returns the list of sequences with names
+    """
     try: 
         seqs=SeqIO.parse(aligned_sequence_file,"fasta")
+        li=[(s.Seq,s.name) for s in seqs]
     except:
         l=open(aligned_sequence_file,"r")
-        li=[x.split("\n")[0] for x in l.readlines()]
+        li=[(x.split("\n")[0],'') for x in l.readlines()]
         l.close()
         return li
 
@@ -156,15 +160,25 @@ def seq_indexes_from_ind(seqs, ind):
     dinucl=len(ind.keys()[0])
     return np.array([[ind[s[j:j+dinucl]] for j in range(len(s)-dinucl+1)] for s in seqs],dtype=np.uint8)
 
-def compute_energies_from_energ_mat(seqs, pmat, ind):
+def compute_energies_from_energ_mat(seq_inds, pmat, ind):
+    """
+    makes the computation of energy profile from a matrix: intermediate function
+    """
     e=[]
-    P=# protein size ???
+    P=len(pmat) # size of matrix, = size of prot -1 for dinuc, and size of prot for mononuc
     for i,s in enumerate(seqs):
         E_tmp=np.zeros(len(seq_tmp)-P+1,dtype=np.float32)
-        while j<P: #loop on protein positions
+        for j in range(P): #loop on protein positions
+            E_tmp=np.add(E_tmp,pmat[j,seq_inds[j:len(s)-P+j+1]],dtype=np.float32)
+        e.append(E_tmp)
+    return e
 
+def compute_energy_profiles_from_PWM(fastafile, pwmfile):
+    ind, mat = load_pwm(pwmfile)
+    seqs=get_aligned_sequences(fastafile)
+    seq_inds=seq_indexes_from_ind(seqs, ind)
+    compute_energies_from_energ_mat(seq_inds, pmat, ind)
 
-            
 
 def compute_direct_PWM(aligned_sequence_file, indirect_proba_PWM=None, indirect_energy_PWM=None, b=1., protsize=None, filename=None):
     """
