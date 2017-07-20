@@ -90,6 +90,9 @@ def energ_pwm_to_proba_pwm(Emat,ind,b=1.):
     return pmat
 
 
+
+
+
 def dinuc_pwm_to_mononuc(pmat, ind):
     """
     takes in an indirect readout probability matrix for dinucs, and returns the mononuc matrix 
@@ -113,6 +116,7 @@ def dinuc_pwm_to_mononuc(pmat, ind):
     if np.max(np.sum(mmat,axis=1))>1.000001:
         print "problem: the mononucleotide probability matrix is not correct. sum of element-wise values: %s"%str(np.sum(mmat,axis=1))
     return mmat
+
 
 
 def plot_pwm(filename,output=None):
@@ -268,6 +272,8 @@ def compute_energy_profiles_from_pwm(fastafile, energ_pwmfile=None, proba_pwmfil
     return 0
 
 
+
+
 def compute_direct_pwm_from_dinuc_distributions_by_counting_dinuc_biases(aligned_sequence_file, indirect_proba_pwm=None, indirect_energy_pwm=None, b=1., protsize=None, filename=None):
     """
     Takes in a fasta file containing the aligned sequences for PWM, and the indirect (dinuc) PWM. 
@@ -335,7 +341,7 @@ def compute_direct_pwm_from_dinuc_distributions_by_counting_dinuc_biases(aligned
     return 0
 
 
-def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(aligned_sequence_file, indirect_proba_pwm=None, indirect_energy_pwm=None, b=1., indirect_size=None, filename=None):
+def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(aligned_sequence_file, indirect_proba_pwm=None, indirect_energy_pwm=None, b=1., indirect_seqsize=None, filename=None, percentile=90.):
     """
     Takes in a fasta file containing the aligned sequences for PWM, and the indirect (dinuc) PWM. 
     The latter can be given either as an energy matrix such as given by the main ThreaDNA program, or as a probability matrix. In the former case, an energy scale (beta factor) can be given. 
@@ -343,6 +349,7 @@ def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(a
     IN THIS VERSION, we simply give a global weight to each sequence, computed from its indirect readout energy. This is not very precise, since we forget where indirect readout acts in the sequence, but the more precise version seemed to demanding. 
     Optional: restrict protein size for indirect readout to location where no direct contacts occur. Normally, the indirect output file is the same as input, with restricted size
     CAUTION: the alignments MUST MATCH, i.e. the centers of the sequences must also be the center of the provided PWM. i.e. without protsize, all sequences must have the length of indirect_proba_PWM + 1. 
+    Percentile is the fraction of input sequences that we keep in the computation of the PWM. Indeed, false positives tend to get a strong deformation energy, and thus to be over-counted in the subsequent PWM... better throw them out by taking only e.g. 90% of the sequences
     """
     # get sequences
     seqs,names=get_aligned_sequences(aligned_sequence_file)
@@ -357,17 +364,17 @@ def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(a
     else:
         print "You must provide either a probability matrix or an energy matrix for the indirect contribution"
         return 1
-    totlen=len(emat)
+    totlen_indir=len(emat) 
     # output name
     if filename is None:
         filename=indirect_proba_pwm.split(".")[0]+"_with_"+aligned_sequence_file.split("/")[-1].split(".")[0]
     # -----------------------------------------
     # compute the matrix part and the sequence length that we must incorporate
-    if indirect_size is None:
-        indirect_size=totlen+1
+    if indirect_seqsize is None:
+        indirect_seqsize=totlen_indir+1
     dinucl=len(ind.keys()[0])     # size of sequence dictionary
-    matlen=indirect_size-1
-    seqlen=indirect_size+dinucl-2
+    indir_matlen=indirect_seqsize-1
+    seqlen=indirect_seqsize+dinucl-2
     # correction of sizes
     seqlist=[]
     for s in seqs:
@@ -378,46 +385,43 @@ def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(a
             return 1
         mid=l/2.
         seqlist.append(s[(int(mid-seqlen/2.)):(int(mid+seqlen/2.))])
-    mid=(indirect_size-1)/2.
-    emat_indir=emat[(int(mid-matlen/2.)):(int(mid+matlen/2.))]
-    #emat_indir=-np.log(pmat_indir) # from proba mat we compute the energ mat in kT... this is a bit circular if the energy matrix was provided, but no matter
+    mid=(indirect_seqsize-1)/2.
+    emat_indir=emat[(int(mid-indir_matlen/2.)):(int(mid+indir_matlen/2.))]
     # -------------------------------------------
     # compute mononuc sequences corrected for whole energy
     mind=dict([(b,i) for i,b in enumerate(bases)])
     dinucinds_in_fasta=seq_indexes_from_ind(seqlist,ind) # inds_in_fasta has EXACTLY the same size as pmat
     es=np.array(compute_energies_from_energ_mat(dinucinds_in_fasta, emat_indir))[:,0] # normally each sequence has exactly ONE energy value because the sizes match exactly
-    print es-es[0]
     weights=np.exp(es-np.mean(es))
-    print weights
-    
-
-
-    
-    freqmat=np.zeros((matlen,len(ind.keys())))
-    for li in inds_in_fasta:
-        for ix,x in enumerate(li):
-            freqmat[ix,x]+=1
-    freqmat/=float(len(seqlist))
+    limval=np.percentile(weights, percentile)
+    correct_seqs=np.where(weights<limval)[0]
+    print correct_seqs                        
+    inds_in_fasta=seq_indexes_from_ind(seqs,mind)
+    freqmat=np.zeros((len(seqs[0]),len(ind.keys())))
+    for il,li in enumerate(inds_in_fasta):
+        if il in correct_seqs:
+            print li, weights[il]
+            for ix,x in enumerate(li):
+                freqmat[ix,x]+=weights[il]
+    freqmat/=np.sum(weights[correct_seqs])
     if np.max(np.sum(freqmat,axis=1))>1.000001:
         print "ERROR: probabilities do not count to 1 in matrix: %s"%str(freqmat)
-    # freqmat is the observed PWM, with the sum of energies
-    # probabilities are multiplied :
-    pmat_dir=freqmat/pmat_indir
-    pmat_dir/=np.sum(pmat_dir,axis=1,keepdims=True)
-    pwm_dir=dinuc_pwm_to_mononuc(pmat_dir, ind)
-    mind=dict([(b,i) for i,b in enumerate(bases)])
     # --------------------------------------------
-    writepwm(pmat_indir, ind, filename+"_ind.pwm")
-    writepwm(pmat_dir, ind, filename+"_dir_dinuc.pwm")
-    writepwm(pwm_dir, mind, filename+"_dir.pwm")
+    writepwm(emat_indir, ind, filename+"_ind_en.pwm")
+    writepwm(freqmat, mind, filename+"_dir_proba.pwm")
     return 0
 
 
 
 
+
+
+
+
+
 # compute_direct_pwm("CRP_seqs.fasta", indirect_proba_pwm=None, indirect_energy_pwm="test_CRP_en.pwm", b=14., protsize=22, filename="bla")
-compute_energy_profiles_from_pwm("crp_lindemose.fa", "crp_lindemose_CRP_en.pwm", bedname="lindemose_from_threadna.bed")
-compute_energy_profiles_from_pwm("crp_lindemose.fa", energ_pwmfile=None, proba_pwmfile="CRP_seqs.pwm", bedname="lindemose_from_rdbpwm.bed")
+#compute_energy_profiles_from_pwm("crp_lindemose.fa", "crp_lindemose_CRP_en.pwm", bedname="lindemose_from_threadna.bed")
+#compute_energy_profiles_from_pwm("crp_lindemose.fa", energ_pwmfile=None, proba_pwmfile="CRP_seqs.pwm", bedname="lindemose_from_rdbpwm.bed")
 
 
 
@@ -440,4 +444,4 @@ compute_energy_profiles_from_pwm("crp_lindemose.fa", energ_pwmfile=None, proba_p
 
 
 # see STAMP motifs for checking !!!
-#compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences("CRP_seqs.txt", indirect_proba_pwm=None, indirect_energy_pwm="crp_lindemose_CRP_en.pwm", b=10., indirect_size=8, filename="bla")
+compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences("CRP_seqs.txt", indirect_proba_pwm=None, indirect_energy_pwm="crp_lindemose_CRP_en.pwm", b=10., indirect_seqsize=8, filename="bla")

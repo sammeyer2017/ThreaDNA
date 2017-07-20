@@ -33,7 +33,7 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
         outfile=proba_pwmfile.split(".")[0]+".pdf"
     ind,mat=load_pwm(proba_pwmfile)
     colors=get_colors(ind)
-    fig=plt.figure(figsize=(figsize,figsize*0.25))
+    fig=plt.figure(figsize=(figsize,2))
     ax=plt.subplot()
     plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.32)
     # height of each number
