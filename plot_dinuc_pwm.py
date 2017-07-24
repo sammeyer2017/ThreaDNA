@@ -35,7 +35,7 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
     colors=get_colors(ind)
     fig=plt.figure(figsize=(figsize,2))
     ax=plt.subplot()
-    plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.32)
+    plt.subplots_adjust(left=0.12, right=0.95, top=0.95, bottom=0.32)
     # height of each number
     n=len(ind.keys())
     le=len(mat)
@@ -69,7 +69,6 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
         #         ax.add_patch(pat.Rectangle((x,sm),.5,sm+h,color=cs[1]))
         #         sm+=h
         hes=heights[ix]
-        print hes
         top=np.cumsum(hes)
         if max(top)>t:
             t=max(top)
@@ -99,7 +98,7 @@ def plot_pwm_from_sequences(aligned_sequence_file, outfile=None, probafile=None)
     return 0
 
 
-plot_pwm("crp_lindemose_CRP_en_proba.pwm")
+#plot_pwm("crp_lindemose_CRP_en_proba.pwm")
 #plot_pwm("crp_lindemose_CRP_en_mono.pwm")
 #plot_pwm_from_sequences("CRP_seqs.txt")
 #plot_pwm_from_sequences("crp_lindemose.fa")

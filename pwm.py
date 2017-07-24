@@ -223,10 +223,10 @@ def writeprofile_simple(filename,E,seqnames,firstind): #write temp files by stru
         posref=np.arange(len(ee))+firstind
         if float(np.__version__[:3])>=1.7:
             # directly export file with header
-            np.savetxt(filename,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
+            np.savetxt(filename,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
         else:
             # export file and add header afterwards
-            np.savetxt(filename, np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f')
+            np.savetxt(filename, np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f')
             os.system(r"sed -i -e '1itrack type=bedGraph name=\"binding free energy (a. u.)\"' %s"%filename)
     else:
         # several sequences
@@ -239,7 +239,7 @@ def writeprofile_simple(filename,E,seqnames,firstind): #write temp files by stru
             ee=E[k]
             posref=np.arange(len(ee))+firstind
             while j<len(ee): #writes sequence name, start position, end, position and energies for each energy calculated
-                f.write("%s\t%.1f\t%.1f\t%0.2f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
+                f.write("%s\t%.1f\t%.1f\t%0.3f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
                 j+=1
             k+=1                        
         f.close()
@@ -420,7 +420,7 @@ def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(a
 
 
 # compute_direct_pwm("CRP_seqs.fasta", indirect_proba_pwm=None, indirect_energy_pwm="test_CRP_en.pwm", b=14., protsize=22, filename="bla")
-#compute_energy_profiles_from_pwm("crp_lindemose.fa", "crp_lindemose_CRP_en.pwm", bedname="lindemose_from_threadna.bed")
+#compute_energy_profiles_from_pwm("crp_lindemose.fa", "crp_lindemose_CRP_en_mono.pwm", bedname="lindemose_from_threadna_monopwm.bed")
 #compute_energy_profiles_from_pwm("crp_lindemose.fa", energ_pwmfile=None, proba_pwmfile="CRP_seqs.pwm", bedname="lindemose_from_rdbpwm.bed")
 
 
@@ -444,4 +444,4 @@ def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(a
 
 
 # see STAMP motifs for checking !!!
-compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences("CRP_seqs.txt", indirect_proba_pwm=None, indirect_energy_pwm="crp_lindemose_CRP_en.pwm", b=10., indirect_seqsize=8, filename="bla")
+#compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences("CRP_seqs.txt", indirect_proba_pwm=None, indirect_energy_pwm="crp_lindemose_CRP_en.pwm", b=10., indirect_seqsize=8, filename="bla")

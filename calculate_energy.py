@@ -113,10 +113,10 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
             posref=posraw+startoff[k]+(n+1)/2
         if float(np.__version__[:3])>=1.7:
             # directly export file with header
-            np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
+            np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
         else:
             # export file and add header afterwards
-            np.savetxt(name, np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.2f')
+            np.savetxt(name, np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f')
             os.system(r"sed -i -e '1itrack type=bedGraph name=\"binding free energy (a. u.)\"' %s"%name)
     else:
         # several sequences
@@ -134,7 +134,7 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
                 posraw=np.arange(len(ee))
                 posref=posraw+startoff[k]+(n+1)/2
             while j<len(ee): #writes sequence name, start position, end, position and energies for each energy calculated
-                f.write("%s\t%.1f\t%.1f\t%0.2f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
+                f.write("%s\t%.1f\t%.1f\t%0.3f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
                 j+=1
             k+=1                        
         f.close()
@@ -238,7 +238,7 @@ def combinematrix(Emat,p,mi,s):
         si=np.reshape(si,(-1,1))
     # print np.shape(Emat),np.shape(si),np.shape(mi)
     # print Emat[0,0]
-    si=np.reshape(si,(2,1,1))
+    si=np.reshape(si,(len(si),1,1))
     Emat=np.divide(Emat,si,dtype=np.float64)
     Emat2=np.log(np.sum(np.exp(-b*Emat),0))/-b
     # print Emat2[0]             
@@ -371,6 +371,7 @@ def main(params,sequence,output):
         if p["Symmetrization"]=="Yes": #calculates total energy for symmetric sructure
             q=rev_q(q) #reverses q
             E=calc_E(q,q0,K) #recalculates energy
+            Emat.append(E)   # list of matrices for each set of nucleotides
             if p["Pattern"]: #uses pattern finding and short sequences energy calculating function
                 print "Calculating Energy on patterns for symmetric structure "+s+"_rev"
                 Etmp,pt,sm=E_seq(E,seq,seqn,ind,n,name+"_tmp/"+s+"_rev.bed",p["Keep tmp"]=="Yes",p["Pattern"],P,p["Offset"])
