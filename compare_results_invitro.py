@@ -54,6 +54,7 @@ def compare_predicted_to_measured_affinities(exp_file, outfile, indirect_energy_
     takes in one or two energy files, and computes the comparison of energies with exp
     outputs the results in outfile, and optionally as a pdf graph
     input exp file: name and foldchange
+    # CAUTION: the provided values are FOLDCHANGES, i.e. proportional to 1/affinity in concentration !!! the larger, the most affine here.  
     the exp and computed files must have the same sequence names in the first column!
     """
     expfc=pd.read_table(exp_file,header=None,sep='\t')
@@ -108,11 +109,12 @@ def compare_predicted_to_measured_affinities(exp_file, outfile, indirect_energy_
         plt.plot(e/kT_to_kcalmol,t/kT_to_kcalmol/ac,ls="",marker="o",ms=4, color="blue",label="combination: $%.2f$"%(r2c[0]**2))
         plt.xlabel(r"$\Delta G_{exp}$ (kcal/mol)")
         plt.ylabel(r"$\Delta G_{pred}$ (kcal/mol)")
+        plt.plot([-2,5],[-2,5],color="black",ls="-", lw=.8)
         #plt.ylim(-3,3)
         #plt.xlim(-2,2)
         plt.axhline(0,color="black")
         plt.axvline(0,color="black")
-        plt.legend(loc=4,)
+        plt.legend(loc=2,)
         plt.tight_layout()
         plt.savefig(outfile.split(".")[0]+".pdf")
     return 0

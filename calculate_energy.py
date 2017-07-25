@@ -116,8 +116,10 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
             np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
         else:
             # export file and add header afterwards
-            np.savetxt(name, np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f')
-            os.system(r"sed -i -e '1itrack type=bedGraph name=\"binding free energy (a. u.)\"' %s"%name)
+            np.savetxt(name+".bak", np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f')
+            os.system(r'echo track type=bedGraph name="binding free energy (a. u.)" > %s'%name)
+            os.system(r"cat %s >> %s"%(name+".bak", name))
+            os.system("rm %s"%(name+".bak"))
     else:
         # several sequences
         f=open(name,"w")

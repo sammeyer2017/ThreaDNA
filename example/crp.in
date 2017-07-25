@@ -1,6 +1,7 @@
 Protein:CRP
-Structures:1CGP
-DNA parameter:ABC_s
+Structures:1CGP,1ZRF
+DNA parameter:NP
 Symmetrization:No
 Keep tmp:No
+Pattern:22
 Temperature factor:1.0

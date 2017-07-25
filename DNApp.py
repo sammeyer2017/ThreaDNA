@@ -485,7 +485,7 @@ class Dnapp(Tk):
             self.create.config(state='disabled')
 
     def launch_calc(self):
-        os.system("python calculate_energy.py %s %s"%(unicode(self.fasta),unicode(self.cnf)))
+        os.system("python calculate_energy.py -s %s %s"%(unicode(self.fasta),unicode(self.cnf)))
         tkMessageBox.showinfo("Execution completed","Computation of energy profile is completed. Result file in %s"%self.fasta.split('.')[0]+"_"+self.cnf.split("/")[-1].split(".")[0]+".bed")
 
     def add_struct(self):
