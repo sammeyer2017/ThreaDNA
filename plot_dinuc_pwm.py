@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf8
+
 from pwm import *
 import matplotlib.pyplot as plt
 import matplotlib.patches as pat
@@ -55,19 +58,6 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
         xs=np.arange(1, le+1, 1)
     t=0
     for ix, x in enumerate(xs):
-        # hes=heights[ix]
-        # sp=0
-        # sm=0
-        # for ih,h in enumerate(hes):
-        #     cs=colors[ih]
-        #     if h>0:
-        #         ax.add_patch(pat.Rectangle((x-.5,sp),.5,sp+h,color=cs[0]))
-        #         ax.add_patch(pat.Rectangle((x,sp),.5,sp+h,color=cs[1]))
-        #         sp+=h
-        #     else:
-        #         ax.add_patch(pat.Rectangle((x-.5,sm),.5,sm+h,color=cs[0]))
-        #         ax.add_patch(pat.Rectangle((x,sm),.5,sm+h,color=cs[1]))
-        #         sm+=h
         hes=heights[ix]
         top=np.cumsum(hes)
         if max(top)>t:
@@ -83,7 +73,6 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
         plt.ylim(0,t*1.1)
     plt.ylabel("bits")
     plt.xlabel("basepair along protein")
-    #plt.tight_layout()
     plt.savefig(outfile, dpi=resol)
     plt.close()
 
@@ -98,7 +87,17 @@ def plot_pwm_from_sequences(aligned_sequence_file, outfile=None, probafile=None)
     return 0
 
 
-#plot_pwm("crp_lindemose_CRP_en_proba.pwm")
-#plot_pwm("crp_lindemose_CRP_en_mono.pwm")
-#plot_pwm_from_sequences("CRP_seqs.txt")
-#plot_pwm_from_sequences("crp_lindemose.fa")
+
+
+# -------------- EXECUTION
+    
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Plot a mono/dinucleotide position weight-matrix in the style of ThreaDNA. For a dinucleotide PWM, it is recommended to plot the probability rather than the energy PWM. Output in pdf format. Execution requires the MatPlotLib library.')
+    # list of operations
+    # classical pwm from aligned sequences
+    # proba/energy pwm to energy profile along sequence
+    parser.add_argument('input', type=str,help='Input PWM file in JASPAR format')
+    parser.add_argument("-o","--output",type=str,action="store",help="Output pdf file")
+    args=parser.parse_args()
+    plot_pwm(unicode(args.input),unicode(args.output)) #executes program
+    

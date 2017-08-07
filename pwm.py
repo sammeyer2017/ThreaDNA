@@ -1,14 +1,19 @@
+#!/usr/bin/env python
 # coding: utf8
 
+import argparse
 from globvar import *
-#from util import *
 import numpy as np
 import os
-from Bio import motifs,SeqIO
+from util import read_fasta2
+
+
 
 
 # --------- JASPAR delimiter
 jdel="\t"
+
+
 
 
 def get_aligned_sequences(aligned_sequence_file):
@@ -17,9 +22,13 @@ def get_aligned_sequences(aligned_sequence_file):
     """
     ext=aligned_sequence_file.split('.')[-1]
     if ext=="fa" or ext=="fasta" or ext=="fsa":
-        seqs=list(SeqIO.parse(aligned_sequence_file,"fasta"))
-        li=[str(s.seq) for s in seqs]
-        names=[s.id for s in seqs]
+        seqs,nam=read_fasta2(aligned_sequence_file)
+        #seqs=list(SeqIO.parse(aligned_sequence_file,"fasta"))
+        #li=[str(s.seq) for s in seqs]
+        #names=[s.id for s in seqs]
+        li,names=list(seqs),list(nam)
+        print li
+        print names
     else:
         print "opened sequence file as a normal text file"
         l=open(aligned_sequence_file,"r")
@@ -119,27 +128,7 @@ def dinuc_pwm_to_mononuc(pmat, ind):
 
 
 
-def plot_pwm(filename,output=None):
-    """
-    Plots a mononuc probability matrix from a JASPAR file
-    Caution: only ONE motif in the file !!!
-    The output must be given as the name of a PDF file, otherwise automatic from the input name
-    """
-    if output is None:
-        output=filename.split("/")[-1].split(".")[0]+".pdf"
-    # Uses WebLogo from BioPython to plot the matrix in pdf format
-    # Requires an internet connection
-    fh = open(filename)
-    for m in motifs.parse(fh, "jaspar"):
-        try:
-            m.weblogo(output,format="PDF")
-        except:
-            print "ERROR trying to plot the sequence logo using the online website WebLogo (http://weblogo.berkeley.edu/). A possible cause is the absence of a working internet connection, otherwise the pwm file %s may be corrupted. If you wish to plot the sequence logo, consider using the alternate website STAMP (http://www.benoslab.pitt.edu/stamp/)"%filename
-    fh.close()
-    return 0
-
-
-def make_and_plot_proba_matrices_from_energ_pwm(filename, b=1., plot=True):
+def make_proba_matrix_from_energ_pwm(filename, b=1.):
     """
     - reads an energy motif file coming from ThreaDNA, in JASPAR format
     - b gives the energy scale to go to kT
@@ -154,11 +143,6 @@ def make_and_plot_proba_matrices_from_energ_pwm(filename, b=1., plot=True):
     mmf=filename.split(".")[0]+"_mono.pwm"
     writepwm(mmat,mind,mmf)
     # plot the matrix
-    if plot:
-        mmf2=filename.split(".")[0]+"_mono2.pwm"
-        writepwm(100*mmat,mind,mmf2)
-        plot_pwm(mmf2)
-        #os.system("rm %s"%mmf2)
     return 0
 
 
@@ -249,12 +233,17 @@ def writeprofile_simple(filename,E,seqnames,firstind): #write temp files by stru
     return 0
 
 
-def compute_energy_profiles_from_pwm(fastafile, energ_pwmfile=None, proba_pwmfile=None, bedname=None):
+def compute_energy_profiles_from_pwm(fastafile, energ_pwmfile=None, proba_pwmfile=None, bedname=None, b=None):
     """ 
-    Main function to compute an energy profile from a pwm file... generally an energy PWM file coming from ThreaDNA, but a probability PWM is also possible. In that case, the energy profile is given in kT
+    Main function to compute an energy profile from a pwm file... generally an energy PWM file coming from ThreaDNA, but a probability PWM is also possible. In that case, the energy profile is given in kT. If you use an energy PWM, you can also give an energy factor b to transform the values to k_B.T unit. 
     """
     if energ_pwmfile != None:
         ind, mat = load_pwm(energ_pwmfile)
+        if b != None:
+            try:
+                mat *= float(b)
+            except:
+                print "CAUTION: the energy factor provided could not be converted to float. We use a factor of 1."
     elif proba_pwmfile != None:
         ind, pmat = load_pwm(proba_pwmfile)
         mat=-np.log(pmat+10**-8)
@@ -430,21 +419,58 @@ def compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences(a
 
 
 
-# -------------- EXECUTION
-   
-#loc=os.path.abspath(os.path.dirname(sys.argv[0])).decode('utf8')+u"/" #saving exec. dir
-# if __name__ == "__main__":
-#     parser = argparse.ArgumentParser(description='Computes the DNA deformation energy profile along a DNA sequence from a position weight matrix file in the JASPAR format, either classical (mononucleotides) or indirect (dinucleotides).') 
-#     parser.add_argument('', type=str,help='Parameter file describing the protein model and computation parameters')
-#     parser.add_argument("-s","--sequence",type=str,help='FASTA file containing DNA sequence(s)')
-#     parser.add_argument("-o","--output",type=str,action="store",help="Name of .bed/.dpwm output file")
-#     args=parser.parse_args()
-#     main(unicode(args.params),unicode(args.sequence),unicode(args.output)) #executes program
-
-
 #ind, mmat = load_pwm("test_CRP.pwm")
 #make_and_plot_proba_matrices_from_energ_pwm("crp_lindemose_CRP_en.pwm", b=20., plot=True)
 
 
 # see STAMP motifs for checking !!!
 #compute_direct_pwm_from_dinuc_distributions_by_reweighting_whole_sequences("CRP_seqs.txt", indirect_proba_pwm=None, indirect_energy_pwm="crp_lindemose_CRP_en.pwm", b=10., indirect_seqsize=8, filename="bla")
+
+
+# -------------- EXECUTION
+def main(sequence, epwm, ppwm, energ, output):
+    if output == "None":
+        outp=None
+    else:
+        outp=output
+    if sequence == "None":
+        # transformation epwm/ppwm
+        if energ=="None":
+            b=None
+        else:
+            b=float(energ)
+        if epwm != "None":
+            print("Transformation of energy PWM into probability PWM")
+            make_proba_matrix_from_energ_pwm(epwm, b)
+        else:
+            print("You must provide an energy PWM or a sequence file as input!")
+    else:
+        if epwm=="None":
+            if ppwm=="None":
+                # compute PPWM from aligned sequences
+                compute_pwm_from_sequences(sequence, outfile=outp)
+            else:
+                # compute profile from ppwm
+                compute_energy_profiles_from_pwm(sequence, energ_pwmfile=None, proba_pwmfile=ppwm, bedname=outp)
+        else:
+            if ppwm=="None":
+                # compute profile from epwm
+                compute_energy_profiles_from_pwm(sequence, energ_pwmfile=epwm, proba_pwmfile=None, bedname=outp, b=energ)
+            else:
+                print("You must provide either an energy PWM or a probability PWM but not both!")
+            
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Modules that implements a series of operations on position weight-matrix files - either the classical ones or deformation energy/probability dinucleotide PWM. The computation and output depends on the type of input: sequence file, PWM file or both. ')
+    # list of operations
+    # classical pwm from aligned sequences  --> input= only sequence file
+    # proba/energy pwm to energy profile along sequence    --> input = energy_pwm or proba_pwm + sequence + b if necessary
+    # energy pwm to proba pwm  --> input= epwm only + b 
+    parser.add_argument('-s', "--sequence", type=str,action="store",help='Input sequence file, for PWM or profile calculation')
+    parser.add_argument("-e","--epwm",type=str,action="store",help="Input position-weight-matrix file of energy: typically the file generated by ThreaDNA")
+    parser.add_argument("-p","--ppwm",type=str,action="store",help="Input position-weight-matrix file of probability: typically a classical PWM obtained from a sequence file, or a probability PWM computed from the ThreaDNA energy PWM")
+    parser.add_argument("-f","--energy_factor",type=str,action="store",help="Only used in combination with an energy PWM: gives the multiplicative factor from the used energy unit to k_B.T. Default 1.")
+    parser.add_argument("-o","--output",type=str,action="store",help="Output file (the extension should be chosen according to the desired operation)")
+    args=parser.parse_args()
+    plot_pwm(unicode(args.sequence),unicode(args.epwm), unicode(args.ppwm), unicode(args.energy_factor), unicode(args.output)) #executes program
