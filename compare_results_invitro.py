@@ -109,7 +109,7 @@ def compare_predicted_to_measured_affinities(exp_file, outfile, indirect_energy_
         plt.plot(e/kT_to_kcalmol,t/kT_to_kcalmol/ac,ls="",marker="o",ms=4, color="blue",label="combination: $%.2f$"%(r2c[0]**2))
         plt.xlabel(r"$\Delta G_{exp}$ (kcal/mol)")
         plt.ylabel(r"$\Delta G_{pred}$ (kcal/mol)")
-        plt.plot([-2,5],[-2,5],color="black",ls="-", lw=.8)
+        plt.plot([1.1*min(e/kT_to_kcalmol),1.1*max(e/kT_to_kcalmol)],[1.1*min(e/kT_to_kcalmol),1.1*max(e/kT_to_kcalmol)],color="black",ls="-", lw=.8)
         #plt.ylim(-3,3)
         #plt.xlim(-2,2)
         plt.axhline(0,color="black")
@@ -120,7 +120,7 @@ def compare_predicted_to_measured_affinities(exp_file, outfile, indirect_energy_
     return 0
     
 
-def plot_correlations(values, files, outfile, minmax):
+def plot_correlations(values, files, outfile, minmax, plot_corvals=True):
     corr=[]
     for iv, v in enumerate(values):
         with open(files[iv],"r") as f:
@@ -133,7 +133,7 @@ def plot_correlations(values, files, outfile, minmax):
     mci=corr.index(maxcorr)
     plt.axvline(values[mci], ls="--", color="blue", lw=1)
     plt.axhline(maxcorr, ls="--", color="blue", lw=1)
-    plt.text(.67, .83, "combination", color="blue")
+    plt.text(.67, maxcorr*.93, "combination", color="blue")
     plt.xlabel("Fraction of direct contribution")
     plt.ylabel("Pearson's correlation $r^2$")
     plt.axhline(corr[0], color="black", ls="--", lw=.5)
@@ -141,19 +141,20 @@ def plot_correlations(values, files, outfile, minmax):
     plt.yticks(np.arange(0,1,.1))
     plt.ylim(minmax)
     plt.xlim(0,1)
-    plt.text(0.01, .48, "ThreaDNA", color="black")
-    plt.text(.85, .25, "PWM", color="gray")
-    ax2 = ax1.twinx()
-    mi,ma=minmax
-    fact=1/(ma-mi)
-    pvalslog=-np.arange(2,12)
-    corrvals=[.496, .607, .689, .752, .7985, .837, .8671, .89145, .9112, .92726]#, .95425]
-    pvalsloglab=[str(x) for x in pvalslog]
-    pvalsloglab[-2]=""
-    pvalsloglab[-4]=""
-    ax2.set_yticks([(x*x-mi)*fact for x in corrvals])
-    ax2.set_yticklabels(pvalsloglab,fontsize=11)
-    ax2.set_ylabel("correlation p-value ($\log_{10}$)")
+    plt.text(0.01, corr[0]*.92, "ThreaDNA", color="black")
+    plt.text(.85, corr[-1]*.82, "PWM", color="gray")
+    if plot_corvals:
+        ax2 = ax1.twinx()
+        mi,ma=minmax
+        fact=1/(ma-mi)
+        pvalslog=-np.arange(2,12)
+        corrvals=[.496, .607, .689, .752, .7985, .837, .8671, .89145, .9112, .92726]
+        pvalsloglab=[str(x) for x in pvalslog]
+        pvalsloglab[-2]=""
+        pvalsloglab[-4]=""
+        ax2.set_yticks([(x*x-mi)*fact for x in corrvals])
+        ax2.set_yticklabels(pvalsloglab,fontsize=11)
+        ax2.set_ylabel("correlation p-value ($\log_{10}$)")
     #plt.tight_layout()
     plt.savefig(outfile)
     plt.close()

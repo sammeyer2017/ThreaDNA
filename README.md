@@ -4,7 +4,8 @@
 If the correct dependencies are installed (see below), you only need to execute the INSTALL script (either from the command line or by double-clicking). 
 An executable file "threadna" should appear in your folder, which you can execute by double-clicking. 
 If any of these files should open as a text file (with script code) instead of being executed, try to righ-click on the file, and change the file properties to make it executable by the user. 
-In the graphical user interface, help is displayed for all options. 
+In the graphical user interface, help is displayed for all options.
+In case of problems, please check the dependencies below.
 
 ## Principle of the program
 The program calculates the DNA deformation energy associated to the binding of a protein, along an input sequence. In the typical case, the protein binds 10-20 basepairs, and the energy profile is computed along a genomic sequence. 
@@ -15,24 +16,12 @@ IMPORTANT: the model is built from one or several high-resolution structures of 
 The calculation is based on the hypothesis that the protein imposes DNA's shape at the nanometer-scale. The bending energy is then calculated from the deformed configuration, using the sequence-dependent structure/elastic parameters for the internal base-pair or the base-pair step deformations. For proteins where several alternate structures are available (typically obtained with different DNA sequences), these can be combined in the calculation: for a given sequence, DNA then "chooses" the weight of each conformation from the different Boltzmann weights. 
 
 ## Dependencies
-The program requires Python with the NumPy library. It was successfully tested on Linux and MacOS platforms, with versions of NumPy >= 1.6, and is more efficient on versions >=1.7. 
+The program requires Python2 with the NumPy library. It was successfully tested on Linux and MacOS platforms, with versions of NumPy >= 1.6, and is more efficient on versions >=1.7. 
 Computational requirements: the computation time and memory load are proportional to the analyzed sequence length and number of protein-bound nucleotides. For a single protein-DNA complex analyzed, the computation typically takes ~ 200 sec and < 1Gb RAM for a 10 Mb sequence. 
 
 ## Description of the input/output files
 To get help on command line options, use the command -h for each program/subprogram: e.g. threadna -h, threadna -c -h, ...
 
-# Subprogram : add a new DNA-protein to the database
-Usage: 
-threadna -a [-p PDBfile] [-r REF] prot_name input
-- prot_name: name of the protein in the database. When combining alternate structural models for the same proteins, mind to use the same name (including the case)
-- input: input of the DNA basepair/step coordinates in the complex: these can be given as (i) either a NDB ID (http://ndbserver.rutgers.edu) or (ii) a file containing the coarse-grained coordinates of the DNA within the complex, obtained from an analysis program/webserver (.out from 3DNA or the webserver http://w3dna.rutgers.edu, or .lis from Curves+) or (iii) the .pdb atomic coordinates of the protein-DNA complex if the software x3dna is installed on the computer and accessible in the path from the current directory.
-- PDBfile: PDB file corresponding to the coordinates given in input. This allows threaDNA to extract additional information on the deformation model, in particular the structure resolution.
-- REF: Position of the reference nucleotide in the structure (default = central nucleotide). This is useful when combining/comparing models where the protein binds different numbers of DNA bases: you should then set a reference to align the binding profiles, for instance the index of a basepair that contacts a given protein residue. Typically, for the nucleosome it is the dyad basepair.
-
-RECOMMENDATION FOR THE INPUT: 
-- if you are analyzing a protein present in the NDB database, use the option (i) BUT CHECK THAT ALL BASEPAIRS ARE PRESENT IN THE LISTS on the server, as there are sometimes missing basepairs, which will result in errors or absurd deformation energies. This happens particularly in the case of extremely distorted DNA oligomers, where it can be difficult to properly define the base reference frames. 
-- if you are analyzing a protein not present or corrupted on the NDB server, download the PDB file and let it run on the Web3DNA webserver to get the .out file. AGAIN, CHECK THAT ALL BASEPAIRS WERE PROPERLY ANALYZED AND ARE PRESENT IN THE LIST. 
-- If it does not work or you want to include several structures, try installing Curves+ or contact the authors for help. 
 
 # Main program
 Computes an energy profile along a sequence
@@ -81,6 +70,74 @@ Parameter set for the DNA sequence-dependent basepair/step structure/stiffness.
 - "ABC_s": dataset of basepair step deformations from (Pasi et al. NAR 2014) based on 1 microsecond molecular dynamics simulations. Sequence dependence: tetranucleotides. 
 - "ABC_i": dataset of internal basepair deformations from (Pasi et al. NAR 2014) based on 1 microsecond molecular dynamics simulations. Sequence dependence: trinucleotides. 
 Note: for historical reasons, the previous (50 ns) version of the "ABC" datasets can be used with "ABC_s_old" and "ABC_i_old". 
+
+
+# Subprogram : add a new DNA-protein to the database
+Usage: 
+threadna -a [-p PDBfile] [-r REF] prot_name input
+- prot_name: name of the protein in the database. When combining alternate structural models for the same proteins, mind to use the same name (including the case)
+- input: input of the DNA basepair/step coordinates in the complex: these can be given as (i) either a NDB ID (http://ndbserver.rutgers.edu) or (ii) a file containing the coarse-grained coordinates of the DNA within the complex, obtained from an analysis program/webserver (.out from 3DNA or the webserver http://w3dna.rutgers.edu, or .lis from Curves+) or (iii) the .pdb atomic coordinates of the protein-DNA complex if the software x3dna is installed on the computer and accessible in the path from the current directory.
+- PDBfile: PDB file corresponding to the coordinates given in input. This allows threaDNA to extract additional information on the deformation model, in particular the structure resolution.
+- REF: Position of the reference nucleotide in the structure (default = central nucleotide). This is useful when combining/comparing models where the protein binds different numbers of DNA bases: you should then set a reference to align the binding profiles, for instance the index of a basepair that contacts a given protein residue. Typically, for the nucleosome it is the dyad basepair.
+
+RECOMMENDATION FOR THE INPUT: 
+- if you are analyzing a protein present in the NDB database, use the option (i) BUT CHECK THAT ALL BASEPAIRS ARE PRESENT IN THE LISTS on the server, as there are sometimes missing basepairs, which will result in errors or absurd deformation energies. This happens particularly in the case of extremely distorted DNA oligomers, where it can be difficult to properly define the base reference frames. 
+- if you are analyzing a protein not present or corrupted on the NDB server, download the PDB file and let it run on the Web3DNA webserver to get the .out file. AGAIN, CHECK THAT ALL BASEPAIRS WERE PROPERLY ANALYZED AND ARE PRESENT IN THE LIST. 
+- If it does not work or you want to include several structures, try installing Curves+ or contact the authors for help. 
+
+# Subprograms : computations involving position-weight-matrices in combination with ThreaDNA
+
+## pwm.py for PWM calculations
+
+usage: pwm.py [-h] [-s SEQUENCE] [-e EPWM] [-p PPWM] [-f ENERGY_FACTOR]
+              [-o OUTPUT]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SEQUENCE, --sequence SEQUENCE
+                        Input sequence file, for PWM or profile calculation
+  -e EPWM, --epwm EPWM  Input position-weight-matrix file of energy: typically
+                        the file generated by ThreaDNA
+  -p PPWM, --ppwm PPWM  Input position-weight-matrix file of probability:
+                        typically a classical PWM obtained from a sequence
+                        file, or a probability PWM computed from the ThreaDNA
+                        energy PWM
+  -f ENERGY_FACTOR, --energy_factor ENERGY_FACTOR
+                        Only used in combination with an energy PWM: gives the
+                        multiplicative factor from the used energy unit to
+                        k_B.T. Default 1.
+  -o OUTPUT, --output OUTPUT
+                        Output file (the extension should be chosen according
+                        to the desired operation)
+
+Modules that implements a series of operations on position weight-matrix files
+- either the classical ones or deformation energy/probability dinucleotide
+PWM.
+
+The computation and output depends on the type of input: sequence file,
+PWM file or both.
+- with sequence file only: computes the associated (mononucleotide) PWM
+- with energy PWM file only: computes the associated probability PWM, using the provided energy factor (default 1.) to transform the energies into k_B.T unit
+- with sequence file and ONE PWM file: computes the energy profile along the sequence(s) of the file. 
+
+## plot_dinuc_pwm.py
+usage: plot_dinuc_pwm.py [-h] [-o OUTPUT] input
+
+Plot a mono/dinucleotide position weight-matrix in the style of ThreaDNA. For
+a dinucleotide PWM, it is recommended to plot the probability rather than the
+energy PWM. Output in pdf format. Execution requires the MatPlotLib library.
+
+positional arguments:
+  input                 Input PWM file in JASPAR format
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        Output pdf file
+
+
+
+
 
 # Helper programs
 ## SeqMotifs

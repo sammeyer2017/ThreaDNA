@@ -113,10 +113,10 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
             posref=posraw+startoff[k]+(n+1)/2
         if float(np.__version__[:3])>=1.7:
             # directly export file with header
-            np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
+            np.savetxt(name,np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.4f',header='track type=bedGraph name="binding free energy (a. u.)"',comments="")
         else:
             # export file and add header afterwards
-            np.savetxt(name+".bak", np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.3f')
+            np.savetxt(name+".bak", np.transpose((posref-0.5,posref+0.5,E[0])), fmt=se+'\t%.1f\t%.1f\t%.4f')
             os.system(r'echo track type=bedGraph name="binding free energy (a. u.)" > %s'%name)
             os.system(r"cat %s >> %s"%(name+".bak", name))
             os.system("rm %s"%(name+".bak"))
@@ -136,7 +136,7 @@ def writeprofile(name,E,P,seqn,off,n,pos=None,start=None): #write temp files by 
                 posraw=np.arange(len(ee))
                 posref=posraw+startoff[k]+(n+1)/2
             while j<len(ee): #writes sequence name, start position, end, position and energies for each energy calculated
-                f.write("%s\t%.1f\t%.1f\t%0.3f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
+                f.write("%s\t%.1f\t%.1f\t%0.4f\n"%(se,posref[j]-0.5,posref[j]+0.5,ee[j]))
                 j+=1
             k+=1                        
         f.close()
@@ -404,7 +404,8 @@ def main(params,sequence,output):
         profile(Et,p,seqm,n,name,P,pos,mi,si,al,start,end)
         print "Global profile built !"
     print "Execution time :"+str(time.time()-t) #prints total exeution time
-    sys.exit(0)
+    #sys.exit(0)
+    return name, namemat
 
 
 # -------------- EXECUTION

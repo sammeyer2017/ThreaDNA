@@ -7,24 +7,27 @@ import argparse
 def occ(en,efft):
     return np.exp(-(en-np.mean(en))/efft)
 
-def main(args):
-    if args.efftemp==None:
-        args.efftemp=.3
+def main(inf,output=None,efftemp=None,coverage=None):
+    if efftemp==None:
+        efftemp=.3
     else:
-        args.efftemp=float(args.efftemp)
-    if args.output==None:
-        outputf=args.inf.split(".")[0]+"_occ.bed"    
+        try:
+            efftemp=float(efftemp)
+        except:
+            print("Problem: could not convert the effective temp %s into float"%efftemp)
+            return "Problem: could not convert the effective temp %s into float"%efftemp
+    if output==None:
+        outputf=inf.split(".")[0]+"_occ.bed"    
     else:
-        outputf=args.output
-
+        outputf=output
     
     # --- compute occupancy profile
-    en=np.loadtxt(args.inf,skiprows=1,usecols=(1,2,3))
-    occprof=occ(en[:,2],args.efftemp)
+    en=np.loadtxt(inf,skiprows=1,usecols=(1,2,3))
+    occprof=occ(en[:,2],efftemp)
     tab=np.vstack((en[:,(0,1)].T,[occprof])).T
     
     # --- read name of chromosome
-    a=open(args.inf,"r")
+    a=open(inf,"r")
     b=a.readline()
     b=a.readline()
     se=b.split()[0]
@@ -40,15 +43,15 @@ def main(args):
 
 
     # ---- optional: coverage
-    if args.coverage!=None:
+    if coverage!=None:
 	# print args.coverage
-        covprof=np.convolve(occprof,np.ones(int(args.coverage))/int(args.coverage),"same")
+        covprof=np.convolve(occprof,np.ones(int(coverage))/int(coverage),"same")
         tab=np.vstack((en[:,(0,1)].T,[covprof])).T
         # cov output file: 
-        if args.output==None:
-            covoutput=args.inf.split(".")[0]+"_cov.bed"
+        if output==None:
+            covoutput=inf.split(".")[0]+"_cov.bed"
         else:
-            covoutput=args.output.split(".")[0]+"_cov.bed"
+            covoutput=output.split(".")[0]+"_cov.bed"
         # export
         if float(np.__version__[:3])>=1.7:
             np.savetxt(covoutput, tab, fmt=se+'\t%.1f\t%.1f\t%.3f', header='track type=bedGraph name="relative coverage"',comments="")
@@ -58,7 +61,7 @@ def main(args):
         print "Coverage profile written in %s"%covoutput
         # ----------------------
 
-    return 0
+    return outputf
 
 
 if __name__ == "__main__":
@@ -68,4 +71,4 @@ if __name__ == "__main__":
     parser.add_argument("-t","--efftemp",type=float,help="Optional value for the effective temperature (reduced units): scales how variations in deformation energy impact the occupancy profile. Default .3")
     parser.add_argument("-cov","--coverage",type=float,help="Optional: compute the coverage profile in addition to occupancy, i.e. the probability that a given position is covered by a protein (rather than the protein center). You must then provide the protein size in basepairs (e.g. 147 for a nucleosome). Output file has the same name as the main output, with the '_cov' suffix")
     args=parser.parse_args()
-    main(args)
+    main(args.inf,args.output,args.efftemp,args.coverage)

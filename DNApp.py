@@ -6,6 +6,9 @@ from ttk import *
 #import Tix
 import calculate_energy as calc
 import add_structure as adds
+import pwm as pwmpy
+import plot_dinuc_pwm as plotpwmpy
+import occupancy as occupancypy
 from tkFileDialog import askopenfilename
 import os
 #from Tkconstants import *
@@ -53,35 +56,36 @@ class Dnapp(Tk):
         w.grid(column=0,row=1,columnspan=3,sticky='EW')
         #lsep=Label(exf)
         #lsep.grid(column=0,row=1,columnspan=2)
-        
-        fasl=Label(exf,text=u"Input FASTA sequence file",font=bf)
-        fasl.grid(column=0,row=2,columnspan=2,sticky='W')
-        opfasta = Button(exf,text=u"Open FASTA",command=self.open_fasta)
-        opfasta.grid(column=0,row=3,sticky='W')
-        lfasta = Label(exf,textvariable=self.fastas)
-        lfasta.grid(column=1,row=3,sticky='EW')
-        fash=Label(exf,text="Provide FASTA file of the\nsequence for which the energy\nprofile is to be computed")
-        fash.grid(column=2,row=2,rowspan=2,sticky='W')
-        w=Separator(exf,orient=HORIZONTAL)
-        w.grid(column=0,row=4,columnspan=3,sticky='EW')
-        
+                
         cnfl=Label(exf,text=u"Input configuration file",font=bf)
-        cnfl.grid(column=0,row=5,columnspan=2,sticky='W')
+        cnfl.grid(column=0,row=2,columnspan=2,sticky='W')
         opcnf = Button(exf,text=u"   Open config file   ",command=self.open_cnf)
-        opcnf.grid(column=0,row=6,sticky='W')
-        cnfh=Label(exf,text="The configuration file describes\nthe protein model with various\noptions in standard format:\nchoose an existing file,\nor use a simplified interface to\ncreate a new configuration file")
-        cnfh.grid(column=2,row=5,rowspan=3,sticky='W')
+        opcnf.grid(column=0,row=3,sticky='W')
+        cnfh=Label(exf,text="The configuration file describes\nthe protein model with various\noptions: choose an existing file,\nor use a simplified interface to\ncreate a new configuration file")
+        cnfh.grid(column=2,row=2,rowspan=3,sticky='W')
         lcnf = Label(exf,textvariable=self.cnfs)
-        lcnf.grid(column=1,row=6,sticky='EW')
+        lcnf.grid(column=1,row=3,sticky='EW')
         self.cfg=Button(exf,text=u"or create config file",command=self.edit_config)
-        self.cfg.grid(column=0,row=7,sticky="W")
+        self.cfg.grid(column=0,row=4,sticky="W")
         #raj=Label(exf,text=u"",font=("Sans","12"))
         #raj.grid(column=0,row=8,columnspan=2,sticky='W')
+
+        fasl=Label(exf,text=u"Optional: input sequence file (fasta)",font=bf)
+        fasl.grid(column=0,row=5,columnspan=2,sticky='W')
+        opfasta = Button(exf,text=u"Open FASTA",command=self.open_fasta)
+        opfasta.grid(column=0,row=6,sticky='W')
+        lfasta = Label(exf,textvariable=self.fastas)
+        lfasta.grid(column=1,row=6,sticky='EW')
+        fash=Label(exf,text="Compute an energy profile\nalong the given sequence.\nOtherwise a PWM file is generated.")
+        fash.grid(column=2,row=5,rowspan=2,sticky='W')
         w=Separator(exf,orient=HORIZONTAL)
-        w.grid(column=0,row=8,columnspan=3,sticky='EW')
+        w.grid(column=0,row=7,columnspan=3,sticky='EW')
+        
+        # w=Separator(exf,orient=HORIZONTAL)
+        # w.grid(column=0,row=8,columnspan=3,sticky='EW')
         self.run=Button(exf,text=u"Calculate Energy",command=self.launch_calc,state="disabled")
         self.run.grid(column=0,row=9,columnspan=1)
-        runh=Label(exf,text="Starts computation of energy profile.\nYou will get a message once the computation is complete.")
+        runh=Label(exf,text="Starts computation of energy profile and/or PWM file.\nYou will get a message once the computation is complete.")
         runh.grid(column=1,row=9,columnspan=2,sticky='W')
         #w=Separator(exf,orient=HORIZONTAL)
         #w.grid(column=0,row=10,columnspan=2,sticky='EW')
@@ -98,11 +102,11 @@ class Dnapp(Tk):
         
         exf3=Frame(self,borderwidth="3m",relief="ridge",width=500,height=150)
         exf3.grid(column=0,row=13,columnspan=2,sticky="N")
-        lcalc=Label(exf3,text=u"Helper program: sequence motifs      ",font=tf)
+        lcalc=Label(exf3,text=u"Subprogram: PWM computations   ",font=tf)
         lcalc.grid(column=0,row=14,columnspan=2)
-        self.hel=Button(exf3,text=u"Sequence motif",command=self.helper)
+        self.hel=Button(exf3,text=u"PWM computations",command=self.pwm)
         self.hel.grid(column=0,row=15,columnspan=1)
-        helph=Label(exf3,text="Small additional program that helps combining ThreaDNA\nprofiles with direct base readout profiles by a protein")
+        helph=Label(exf3,text="Manipulate mono/dinucleotide position-weight-matrix \nin combination with ThreaDNA")
         helph.grid(column=1,row=15,columnspan=1,rowspan=1,sticky='W')
         
         exf4=Frame(self,borderwidth="3m",relief="ridge",width=500,height=150)
@@ -200,6 +204,7 @@ class Dnapp(Tk):
         addbh=Label(self.cfgpan,text="Add structure to ThreaDNA database.")
         addbh.grid(column=2,row=12,rowspan=1,sticky='EW')
         
+    """
     def helper(self):
         self.cfgpan=Toplevel()
         self.cfgpan.grab_set()
@@ -271,6 +276,101 @@ class Dnapp(Tk):
         peneref.grid(column=6,row=8,sticky='N')
         self.helperrun=Button(self.cfgpan,text=u"Compute\npattern",command=self.run_helper,state="disabled")
         self.helperrun.grid(column=5,row=9,columnspan=2,rowspan=2)
+    """
+
+    def pwm(self):
+        self.cfgpan=Toplevel()
+        self.cfgpan.grab_set()
+        self.cfgpan.grid()
+
+        #self.grid()
+        #self.ida=StringVar()
+        #self.ida.trace("w",self.enable_add)
+        
+        self.rowconfigure(0, pad=30)
+        self.fastas=StringVar()
+        self.epwms=StringVar()
+        self.ppwms=StringVar()
+        #self.pwms.trace("w",self.enable_launch_pwm)
+        self.energ=StringVar()
+        #self.energ.trace("w",self.enable_launch_helper)
+
+        self.fasta=""
+        self.epwm=""
+        self.ppwm=""
+        #self.pos=0
+        self.energ="1."
+        #self.ref=0
+        
+
+         # fonts
+        tf=tkFont.Font(family="Sans",size=12,weight="bold")
+        bf=tkFont.Font(family="Sans",size=10,weight="bold")
+        mf=tkFont.Font(family="Sans",size=10)
+        
+        s=Style()
+        s.theme_use('classic')
+        
+        #penf=Frame(self,borderwidth="3m",relief="ridge")
+        #penf.grid(column=5,row=0,columnspan=2,sticky="N")
+
+        penlcalc=Label(self.cfgpan,text=u"Subprogram:\ncomputations on position-weight-matrices\nin combination with ThreaDNA",font=tf)
+        penlcalc.grid(column=5,row=0,columnspan=2)
+        penraj=Label(self.cfgpan,text=u"",font=("Sans","3"))
+        penraj.grid(column=5,row=1,columnspan=2,sticky='W')
+        w=Separator(self.cfgpan,orient=HORIZONTAL)
+        w.grid(column=5,row=1,columnspan=2,sticky='EW')
+
+        expl=Label(self.cfgpan,text=u"You can provide a sequence file and/or a PWM file (JASPAR format).\nThe computation depends on the input type (see readme file)",font=mf)
+        expl.grid(column=5,row=2,columnspan=2)
+        penopfasta = Button(self.cfgpan,text=u"Sequence file: ",command=self.open_fasta)
+        penopfasta.grid(column=5,row=3,sticky='N')
+        penlfasta = Label(self.cfgpan,textvariable=self.fastas)
+        penlfasta.grid(column=6,row=3,sticky='N')
+
+        penopfasta = Button(self.cfgpan,text=u"Energy PWM file: ",command=self.open_epwm)
+        penopfasta.grid(column=5,row=4,sticky='N')
+        penlfasta = Label(self.cfgpan,textvariable=self.epwms)
+        penlfasta.grid(column=6,row=4,sticky='N')
+
+        penopfasta = Button(self.cfgpan,text=u"Proba PWM file: ",command=self.open_ppwm)
+        penopfasta.grid(column=5,row=5,sticky='N')
+        penlfasta = Label(self.cfgpan,textvariable=self.ppwms)
+        penlfasta.grid(column=6,row=5,sticky='N')
+
+        
+        # penlnuc=Label(self.cfgpan,text=u"Nucleotide: ",font=mf)
+        # penlnuc.grid(column=5,row=3,sticky='N')
+        # penenuc=Entry(self.cfgpan,textvariable=self.nuc)
+        # penenuc.grid(column=6,row=3,sticky='N')
+        
+        # penlpos=Label(self.cfgpan,text=u"Position in the complex: ",font=mf)
+        # penlpos.grid(column=5,row=4,sticky='N')
+        # penepos=Entry(self.cfgpan,textvariable=self.pos)
+        # penepos.grid(column=6,row=4,sticky='N')
+        
+        # penllen=Label(self.cfgpan,text=u"Length of the complex: ",font=mf)
+        # penllen.grid(column=5,row=5,sticky='N')
+        # penelen=Entry(self.cfgpan,textvariable=self.leng)
+        # penelen.grid(column=6,row=5,sticky='N')
+
+        penlref=Label(self.cfgpan,text=u"Optional:\nEnergy rescaling factor ",font=mf)
+        penlref.grid(column=5,row=6,rowspan=2,sticky='N')
+        peneref=Entry(self.cfgpan,textvariable=self.energ)
+        peneref.grid(column=6,row=6,sticky='N')
+
+        w=Separator(self.cfgpan,orient=HORIZONTAL)
+        w.grid(column=5,row=8,columnspan=2,sticky='EW')
+
+        
+        self.pwmrun=Button(self.cfgpan,text=u"Run computation",command=self.run_pwm)
+        self.pwmrun.grid(column=5,row=9,columnspan=1,rowspan=2)
+
+        self.pwmplot=Button(self.cfgpan,text=u"Plot PWM",command=self.plot_pwm)
+        self.pwmplot.grid(column=6,row=9,columnspan=1,rowspan=2)
+
+
+
         
 
     def occupancy(self):
@@ -289,8 +389,11 @@ class Dnapp(Tk):
         self.efftemps=StringVar()
         self.coverages=StringVar()
         
+        self.efftemps.set("1.0")
+
+
         self.inf=""
-        self.efftemp="5.0"
+        self.efftemp="1.0"
         self.coverage=""
         #self.leng=0
         #self.ref=0
@@ -461,7 +564,7 @@ class Dnapp(Tk):
             self.addb.config(state='disabled')
 
     def enable_launch(self,*args):
-        if self.fasta and self.cnf:
+        if self.cnf:
             self.run.config(state='normal')
 
     def enable_launch_helper(self,*args):
@@ -485,8 +588,14 @@ class Dnapp(Tk):
             self.create.config(state='disabled')
 
     def launch_calc(self):
-        os.system("python calculate_energy.py -s %s %s"%(unicode(self.fasta),unicode(self.cnf)))
-        tkMessageBox.showinfo("Execution completed","Computation of energy profile is completed. Result file in %s"%self.fasta.split('.')[0]+"_"+self.cnf.split("/")[-1].split(".")[0]+".bed")
+        seq=self.fasta
+        if seq=="":
+            seq="None"
+        name, namemat=calc.main(params=unicode(self.cnf),sequence=seq,output="None")
+        if seq=="None":
+            tkMessageBox.showinfo("Execution completed","Computation completed.\nPWM file in %s"%namemat)
+        else:
+            tkMessageBox.showinfo("Execution completed","Computation completed.\nEnergy profile in %s\nPWM file in %s"%(name,namemat))
 
     def add_struct(self):
         ref=self.ref.get()
@@ -496,23 +605,49 @@ class Dnapp(Tk):
             s=self.struc
         else:
             s=self.ida.get()
-        adds.main(unicode(self.prota.get()),unicode(s),unicode(self.pdb),ref)
-        tkMessageBox.showinfo("Execution completed","Protein structure added to the database")
+        mesg=adds.main(unicode(self.prota.get()),unicode(s),unicode(self.pdb),ref)
+        tkMessageBox.showinfo("Execution completed",msg)
 
-    def run_helper(self):
-        if self.ref.get()==0:
-            ref=self.leng.get()/2
+    # def run_helper(self):
+    #     if self.ref.get()==0:
+    #         ref=self.leng.get()/2
+    #     else:
+    #         ref=self.ref.get()
+    #     os.system("python seqmotifs.py -r %d %s %s %d %d"%(ref,unicode(self.fasta),unicode(self.nuc.get()),self.pos.get(),self.leng.get()))
+    #     tkMessageBox.showinfo("Execution successful","Helper program execution completed")
+
+    def run_pwm(self):
+        fasta=self.fasta
+        if self.fasta=="":
+            fasta="None"
+        epwm=self.epwm
+        if self.epwm=="":
+            epwm="None"
+        ppwm=self.epwm
+        if self.ppwm=="":
+            ppwm="None"
+        outf=pwmpy.main(fasta, epwm, ppwm, unicode(self.energ), output="None")
+        tkMessageBox.showinfo("Execution successful","Computation complete. Output in file\n%s"%outf)
+
+    def plot_pwm(self):
+        if self.ppwm=="":
+            if self.epwm=="":
+                tkMessageBox.showinfo("Problem","Provide a probability PWM file to plot")
+                return 1
+            else:
+                pwm=unicode(self.epwm)
         else:
-            ref=self.ref.get()
-        os.system("python seqmotifs.py -r %d %s %s %d %d"%(ref,unicode(self.fasta),unicode(self.nuc.get()),self.pos.get(),self.leng.get()))
-        tkMessageBox.showinfo("Execution successful","Helper program execution completed")
+            pwm=unicode(self.ppwm)
+        outf=plotpwmpy.plot_pwm(pwm, outfile=None)
+        tkMessageBox.showinfo("Execution successful","PWM %s was plotted to file\n%s"%(pwm,outf))
 
+        
     def run_occupancy(self):
-        if self.coverages.get()=="":
-            os.system("python occupancy.py -t %s %s"%(unicode(self.efftemps.get()),unicode(self.inf)))
-        else:
-            os.system("python occupancy.py -t %s -cov %s %s"%(unicode(self.efftemps.get()),unicode(self.coverages.get()),unicode(self.inf)))
-        tkMessageBox.showinfo("Execution successful","Occupancy subprogram execution completed. The result files are %s"%(self.inf.split(".")[0]+"_[occ/cov].bed"))
+        cov=self.coverages.get()
+        if cov=="":
+            cov=None
+        outf=occupancypy.main(unicode(self.inf), output=None, efftemp=self.efftemps.get(), coverage=cov)
+        tkMessageBox.showinfo("Execution successful","Execution completed. The result file is\n%s"%outf)
 
 
     def open_struc(self):
@@ -527,6 +662,14 @@ class Dnapp(Tk):
         self.fasta=askopenfilename()
         self.fastas.set(self.fasta.split("/")[-1])
 
+    def open_epwm(self):
+        self.epwm=askopenfilename()
+        self.epwms.set(self.epwm.split("/")[-1])
+
+    def open_ppwm(self):
+        self.ppwm=askopenfilename()
+        self.ppwms.set(self.ppwm.split("/")[-1])
+        
     def open_profile(self):
         self.inf=askopenfilename()
         self.infs.set(self.inf.split("/")[-1])

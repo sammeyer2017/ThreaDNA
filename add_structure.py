@@ -243,8 +243,11 @@ def main(name,f,pdb=None,ref=None):
     std_params(f2,Qi,Qs)
     f2.close()
     sl.update_list() #update struct list
-    print "List updated with new structure !"
+    print("List updated with new structure !")
+    return "List updated with new structure !"
 
+
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Imports the DNA deformation state from a new protein-DNA complex structural model, and adds it to the local database for use in threaDNA.') #program parser and help
     parser.add_argument('name', metavar='prot_name', type=str,help='Name of the protein. Caution: if several models will be analyzed for this protein, always use the same name/case.')

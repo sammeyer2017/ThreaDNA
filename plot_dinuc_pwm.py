@@ -67,6 +67,8 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
                 ax.add_patch(pat.Rectangle((x-.3,top[ic]-hes[ic]),.3,hes[ic],color=c[0]))
                 ax.add_patch(pat.Rectangle((x,top[ic]-hes[ic]),.3,hes[ic],color=c[1]))
     plt.axvline(np.mean(mononucs), ls="--", color="black", lw=.8)
+    if le>30:
+        ax.set_xticklabels([])
     if t<2:
         plt.ylim(0,2)
     else:
@@ -75,7 +77,7 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
     plt.xlabel("basepair along protein")
     plt.savefig(outfile, dpi=resol)
     plt.close()
-
+    return outfile
     
 def plot_pwm_from_sequences(aligned_sequence_file, outfile=None, probafile=None):
     if outfile==None:
@@ -99,5 +101,5 @@ if __name__ == "__main__":
     parser.add_argument('input', type=str,help='Input PWM file in JASPAR format')
     parser.add_argument("-o","--output",type=str,action="store",help="Output pdf file")
     args=parser.parse_args()
-    plot_pwm(unicode(args.input),unicode(args.output)) #executes program
+    plot_pwm(unicode(args.input),args.output) #executes program
     

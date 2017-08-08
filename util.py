@@ -22,7 +22,7 @@ def read_fasta(fa): #reads input fasta file to dictionary (seq_name:sequence)
                sys.exit("Incorrect FASTA file "+fa)
             seq[i]+=l[:-1].upper()
     f.close()
-    print "sequences loaded : "+",".join(seqn)
+    print("sequences loaded : "+",".join(seqn))
     return np.array(seq),np.array(seqn)
 
 def read_fasta2(fa): #reads input fasta file to dictionary (seq_name:sequence)
@@ -44,7 +44,7 @@ def read_fasta2(fa): #reads input fasta file to dictionary (seq_name:sequence)
     while i<len(si)-1:
         seq.append("".join(l[si[i]+1:si[i+1]]).upper())
         i+=1
-    print "sequences loaded : "+",".join(seqn)
+    print("sequences loaded : "+",".join(seqn))
     return np.array(seq),np.array(seqn)
 
 
@@ -209,7 +209,7 @@ def load_dnamodel(ca,out,T=None): #load DNA model data (q0 ad K)
             s.append(si)
             ind.append(compl_string(se))
     ind=dict(zip(ind,range(len(ind)))) #index dictionary construction
-    print "Loaded "+ca+" parameters"
+    print("Loaded "+ca+" parameters")
     return np.reshape(m,(1,-1,6)),np.array(s,dtype=np.float32),ind,n #reshaping for further utilisation (q0,K,ind,n)
 
 def read_q(p,s,ca,out,l,off,al): #reads protein-bound DNA parameters
@@ -264,7 +264,7 @@ def writepwm(Emat,ind,filename):
     for i,s in enumerate(nis):
         f.write("%s\t["%s)
         for x in Emat.T[ind[s]]:
-            f.write("\t%.3f"%x)
+            f.write("\t%.4f"%x)
         f.write("\t]\n")
     f.close()
     return 0
