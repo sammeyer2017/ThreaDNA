@@ -7,7 +7,6 @@ from ttk import *
 import calculate_energy as calc
 import add_structure as adds
 import pwm as pwmpy
-import plot_dinuc_pwm as plotpwmpy
 import occupancy as occupancypy
 from tkFileDialog import askopenfilename
 import os
@@ -630,16 +629,20 @@ class Dnapp(Tk):
         tkMessageBox.showinfo("Execution successful","Computation complete. Output in file\n%s"%outf)
 
     def plot_pwm(self):
-        if self.ppwm=="":
-            if self.epwm=="":
-                tkMessageBox.showinfo("Problem","Provide a probability PWM file to plot")
-                return 1
+        try:
+            import plot_dinuc_pwm as plotpwmpy
+            if self.ppwm=="":
+                if self.epwm=="":
+                    tkMessageBox.showinfo("Problem","Provide a probability PWM file to plot")
+                    return 1
+                else:
+                    pwm=unicode(self.epwm)
             else:
-                pwm=unicode(self.epwm)
-        else:
-            pwm=unicode(self.ppwm)
-        outf=plotpwmpy.plot_pwm(pwm, outfile=None)
-        tkMessageBox.showinfo("Execution successful","PWM %s was plotted to file\n%s"%(pwm,outf))
+                pwm=unicode(self.ppwm)
+            outf=plotpwmpy.plot_pwm(pwm, outfile=None)
+            tkMessageBox.showinfo("Execution successful","PWM %s was plotted to file\n%s"%(pwm,outf))
+        except:
+            tkMessageBox.showinfo("Problem","The plot could not be completed. One possible reason is that you don't have the MatPlotLib graphical library, that is generally not installed by default. If you don't want to install the library, you can plot traditional (mononucleotides) PWMs in JASPAR format on the STAMP website (http://www.benoslab.pitt.edu/stamp)")
 
         
     def run_occupancy(self):

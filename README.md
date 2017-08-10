@@ -18,6 +18,9 @@ The calculation is based on the hypothesis that the protein imposes DNA's shape 
 ## Dependencies
 The program requires Python2 with the NumPy library. It was successfully tested on Linux and MacOS platforms, with versions of NumPy >= 1.6, and is more efficient on versions >=1.7. 
 Computational requirements: the computation time and memory load are proportional to the analyzed sequence length and number of protein-bound nucleotides. For a single protein-DNA complex analyzed, the computation typically takes ~ 200 sec and < 1Gb RAM for a 10 Mb sequence. 
+If your default Python version is incompatible with our scripts, you can change the line
+pythonexec="python2"
+at the beginning of the threadna script. 
 
 ## Description of the input/output files
 To get help on command line options, use the command -h for each program/subprogram: e.g. threadna -h, threadna -c -h, ...
@@ -114,9 +117,8 @@ Modules that implements a series of operations on position weight-matrix files
 - either the classical ones or deformation energy/probability dinucleotide
 PWM.
 
-The computation and output depends on the type of input: sequence file,
-PWM file or both.
-- with sequence file only: computes the associated (mononucleotide) PWM
+The computation and output depends on the type of input: sequence file, PWM file or both.
+- with sequence file only: computes the (mononucleotide) PWM from the list of sequences in the file. They must all have the same size. 
 - with energy PWM file only: computes the associated probability PWM, using the provided energy factor (default 1.) to transform the energies into k_B.T unit
 - with sequence file and ONE PWM file: computes the energy profile along the sequence(s) of the file. 
 
