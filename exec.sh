@@ -1,4 +1,3 @@
-pythonexec="python2"
 help=\
 "ThreaDNA: utility program to analyze the mechanical \n
 deformation of DNA in high-resolution protein-\n

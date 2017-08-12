@@ -94,7 +94,7 @@ def energ_pwm_to_proba_pwm(Emat,ind,b=1.):
     ind is the dictionary of correspondence index-sequence
     """
     pmat=np.exp(-b*Emat)
-    pmat=np.divide(pmat,np.sum(pmat,axis=1,keepdims=True))
+    pmat=np.divide(pmat,np.sum(pmat,axis=1).reshape(-1,1))
     return pmat
 
 
@@ -122,7 +122,7 @@ def dinuc_pwm_to_mononuc(pmat, ind):
     beforemat=np.concatenate((beforemat,np.ones((1,4))))
     aftermat=np.concatenate((np.ones((1,4)),aftermat))
     mmat=beforemat*aftermat
-    mmat/=np.sum(mmat,axis=1,keepdims=True)
+    mmat/=np.sum(mmat,axis=1).reshape(-1,1)
     # test if all mononucprobabilities have a sum equal to 1
     #if np.not_equal(np.sum(mmat,axis=1),1.*np.ones(len(mmat))).any():
     return mmat
@@ -420,12 +420,12 @@ def main(sequence, epwm, ppwm, energ, output):
     else:
         outp=output
     out=outp
+    # transformation epwm/ppwm
+    if energ=="None":
+        b=1.
+    else:
+        b=float(energ)
     if sequence == "None":
-        # transformation epwm/ppwm
-        if energ=="None":
-            b=1.
-        else:
-            b=float(energ)
         if epwm != "None":
             print("Transformation of energy PWM into probability PWM")
             out=make_proba_matrix_from_energ_pwm(epwm, b)
@@ -438,11 +438,12 @@ def main(sequence, epwm, ppwm, energ, output):
                 out=compute_pwm_from_sequences(sequence, outfile=outp)
             else:
                 # compute profile from ppwm
+                print "ppwm", ppwm
                 out=compute_energy_profiles_from_pwm(sequence, energ_pwmfile=None, proba_pwmfile=ppwm, bedname=outp)
         else:
             if ppwm=="None":
                 # compute profile from epwm
-                out=compute_energy_profiles_from_pwm(sequence, energ_pwmfile=epwm, proba_pwmfile=None, bedname=outp, b=energ)
+                out=compute_energy_profiles_from_pwm(sequence, energ_pwmfile=epwm, proba_pwmfile=None, bedname=outp, b=b)
             else:
                 print("You must provide either an energy PWM or a probability PWM but not both!")
     return out

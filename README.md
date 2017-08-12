@@ -18,9 +18,12 @@ The calculation is based on the hypothesis that the protein imposes DNA's shape 
 ## Dependencies
 The program requires Python2 with the NumPy library. It was successfully tested on Linux and MacOS platforms, with versions of NumPy >= 1.6, and is more efficient on versions >=1.7. 
 Computational requirements: the computation time and memory load are proportional to the analyzed sequence length and number of protein-bound nucleotides. For a single protein-DNA complex analyzed, the computation typically takes ~ 200 sec and < 1Gb RAM for a 10 Mb sequence. 
-If your default Python version is incompatible with our scripts, you can change the line
-pythonexec="python2"
-at the beginning of the threadna script. 
+During installation, the program tries to find the correct Python version. You can find the employed command in the line 
+pythonexec = "pythonXXX"
+at the beginning of the threadna script.
+If no working version was found, the line is
+pythonexec = "PYTHON2_WITH_NUMPY_NOT_FOUND"
+If your software does not work after installation, please first check this line, and if you have a working version of Python at a non-standard location, please replace the line accordingly. 
 
 ## Description of the input/output files
 To get help on command line options, use the command -h for each program/subprogram: e.g. threadna -h, threadna -c -h, ...
@@ -153,7 +156,7 @@ threadna -s -r 8 sequence_file.fasta G 1 15
 threadna -s -r 8 sequence_file.fasta C 15 15
 The resulting tables have exactly the same structure and indexes as the ThreaDNA profile obtained on the same model (using the pattern "15"). The deformation energies associated to the protein bound with G/C at the desired positions can thus be obtained immediately using MatLab/R/Numpy/Excel, and they can be combined, for instance to introduce a free energy penalty when the correct nucleotide is absent. 
 
-## Occupancy
+## Occupancy
 Helper program that computes an occupancy and/or coverage profile. 
 Occupancy: probability that the protein occupies a given precise position, defined by the reference basepair of the protein-DNA model (e.g. the dyad basepair of a nucleosome). This profile is simply the Boltzmann inverse of the energy profile. 
 Coverage: probability that a given base is covered by a protein, which can then occupy different neighbor positions (depending on the protein size along the DNA). This profile is the occupancy profile convoluted by the protein size. 

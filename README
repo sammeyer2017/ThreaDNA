@@ -29,9 +29,12 @@ DEPENDENCIES
 ------------
 The program requires Python2 with the NumPy library. It was successfully tested on Linux and MacOS platforms, with versions of NumPy >= 1.6, and is more efficient on versions >=1.7. 
 Computational requirements: the computation time and memory load are proportional to the analyzed sequence length and number of protein-bound nucleotides. For a single protein-DNA complex analyzed, the computation typically takes ~ 200 sec and < 1Gb RAM for a 10 Mb sequence. 
-If your default Python version is incompatible with our scripts, you can change the line
-pythonexec = "python2"
-at the beginning of the threadna script. 
+During installation, the program tries to find the correct Python version. You can find the employed command in the line 
+pythonexec = "pythonXXX"
+at the beginning of the threadna script.
+If no working version was found, the line is
+pythonexec = "PYTHON2_WITH_NUMPY_NOT_FOUND"
+If your software does not work after installation, please first check this line, and if you have a working version of Python at a non-standard location, please replace the line accordingly. 
 
 
 

@@ -1,8 +1,11 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR"
+# find correct Python2 version
 echo '#!/bin/bash' > threadna
+echo '# ThreaDNA by Sam Meyer, 2017.' >> threadna
 echo DIR=\"$(pwd)\" >> threadna
+echo pythonexec=\"$(./find_python_version.py)\" >> threadna
 cat exec.sh >> threadna
 chmod u+x threadna
 if [ $# = 1 ]

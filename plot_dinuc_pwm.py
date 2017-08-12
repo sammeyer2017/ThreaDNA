@@ -42,7 +42,7 @@ def plot_pwm(proba_pwmfile, outfile=None, figsize=6, resol=300):
     # height of each number
     n=len(ind.keys())
     le=len(mat)
-    totheights=np.sum(np.log2((mat+10**-8)*n)*mat, axis=1, keepdims=True)
+    totheights=np.sum(np.log2((mat+10**-8)*n)*mat, axis=1).reshape(-1,1)
     heights=mat*totheights
     if n==16:
         # dinuc:

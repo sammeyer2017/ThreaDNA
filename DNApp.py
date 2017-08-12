@@ -14,6 +14,7 @@ import os
 import tkFont
 import tkMessageBox
 
+
 class Dnapp(Tk):
     def __init__(self,parent):
         Tk.__init__(self)
@@ -291,9 +292,12 @@ class Dnapp(Tk):
         self.epwms=StringVar()
         self.ppwms=StringVar()
         #self.pwms.trace("w",self.enable_launch_pwm)
-        self.energ=StringVar()
+        self.energs=StringVar()
         #self.energ.trace("w",self.enable_launch_helper)
 
+        self.energs.set("1.")
+
+        
         self.fasta=""
         self.epwm=""
         self.ppwm=""
@@ -355,7 +359,7 @@ class Dnapp(Tk):
 
         penlref=Label(self.cfgpan,text=u"Optional:\nEnergy rescaling factor ",font=mf)
         penlref.grid(column=5,row=6,rowspan=2,sticky='N')
-        peneref=Entry(self.cfgpan,textvariable=self.energ)
+        peneref=Entry(self.cfgpan,textvariable=self.energs)
         peneref.grid(column=6,row=6,sticky='N')
 
         w=Separator(self.cfgpan,orient=HORIZONTAL)
@@ -459,9 +463,10 @@ class Dnapp(Tk):
         self.patv=StringVar()
 
         self.tfv.set(1)
-        self.parv.set("ABC_s")
+        self.parv.set("NP")
         self.tempv.set(300)
-
+        self.namev.set("protein.in")
+        
         self.namev.trace("w",self.enable_create)
         self.parv.trace("w",self.enable_create)
         self.tfv.trace("w",self.enable_create)
@@ -617,15 +622,15 @@ class Dnapp(Tk):
 
     def run_pwm(self):
         fasta=self.fasta
-        if self.fasta=="":
+        if self.fasta=="" or self.fasta==():
             fasta="None"
         epwm=self.epwm
-        if self.epwm=="":
+        if self.epwm=="" or self.epwm==():
             epwm="None"
-        ppwm=self.epwm
-        if self.ppwm=="":
+        ppwm=self.ppwm
+        if self.ppwm=="" or self.ppwm==():
             ppwm="None"
-        outf=pwmpy.main(fasta, epwm, ppwm, unicode(self.energ), output="None")
+        outf=pwmpy.main(fasta, epwm, ppwm, unicode(self.energs.get()), output="None")
         tkMessageBox.showinfo("Execution successful","Computation complete. Output in file\n%s"%outf)
 
     def plot_pwm(self):
@@ -682,7 +687,7 @@ class Dnapp(Tk):
         self.cnfs.set(self.cnf.split("/")[-1])
 
     def create_cnf(self):
-        f=open(self.namev.get(),"w")
+        f=open(os.getcwd()+"/"+self.namev.get(),"w")
         f.write("Protein:"+self.protv.get()+"\n")
         f.write("Structures:"+",".join(filter(None,[x.get() for x in self.structv]))+"\n")
         f.write("DNA parameter:"+self.parv.get()+"\n")
@@ -702,6 +707,7 @@ class Dnapp(Tk):
         f.close()
         self.cnf=self.namev.get()
         self.cnfs.set(self.namev.get())
+        tkMessageBox.showinfo("Configuration file created","The file is located at %s"%(os.getcwd()+"/"+self.namev.get()))
         self.cfgpan.destroy()
 
     def update_prot(self,*args):
