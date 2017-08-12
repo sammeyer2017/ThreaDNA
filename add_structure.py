@@ -15,6 +15,9 @@ def autoanalyze(id,out):     #analyse sequence on webserver
     #open url in ndb for query intra parameters
     ip = url.read()
     intratab=[map(float,x.split(',')[3:]) for x in ip.split('\n')[1:-1]] #convert results to float numbers
+    if intratab==[]:
+        print "ERROR: could not load the intra-bp parameter file. It is probably absent from the NDB database. Try to analyze your pdb file through the Web3DNA webserver, and provide the output .out file to ThreaDNA."
+        raise NameError("No NDB data")
     if not intratab:
         sys.exit("ID not found in NDB")
     url=urllib2.urlopen('http://ndbserver.rutgers.edu/service/ndb/atlas/stfeatures?searchTarget='+id.lower()+'&ftrType=bpmsp&type=csv')
@@ -198,6 +201,7 @@ def main(name,f,pdb=None,ref=None):
     f2.close()
     sl.update_list() #update struct list
     print "List updated with new structure !"
+    return "List updated with new structure !"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Imports the DNA deformation state from a new protein-DNA complex structural model, and adds it to the local database for use in threaDNA.') #program parser and help

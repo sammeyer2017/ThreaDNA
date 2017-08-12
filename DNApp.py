@@ -119,6 +119,7 @@ class Dnapp(Tk):
         occh.grid(column=1,row=18,columnspan=1,rowspan=1,sticky='W')
 
 
+
     def new_prot(self):
 
         self.cfgpan=Toplevel()
@@ -168,11 +169,11 @@ class Dnapp(Tk):
 
         lprot=Label(self.cfgpan,text=u"DNA structure in complex",font=bf)
         lprot.grid(column=0,row=4,columnspan=2,sticky='EW')
-        lid=Label(self.cfgpan,text="Enter PDB ID",font=mf,justify=RIGHT)
+        lid=Label(self.cfgpan,text="Enter NDB ID",font=mf,justify=RIGHT)
         lid.grid(column=0,row=5,sticky='NW')
         eid=Entry(self.cfgpan,textvariable=self.ida)
         eid.grid(column=1,row=5,sticky='EW')
-        NDBh=Label(self.cfgpan,text="Provide ID of the structure in the PDB database. \nOtherwise, a base-pair (step) coordinate file,\nfrom software 3DNA (.out) or Curves+ (.lis).\nCAUTION: check that no basepair is missing!")
+        NDBh=Label(self.cfgpan,text="Provide ID of the structure in the NDB database. \nOtherwise, a base-pair (step) coordinate file,\nfrom software 3DNA (.out) or Curves+ (.lis).\nCAUTION: check that no basepair is missing!")
         NDBh.grid(column=2,row=4,rowspan=3,sticky='EW')
         opstruc = Button(self.cfgpan,text=u"or open coord file",command=self.open_struc)
         opstruc.grid(column=0,row=6,sticky='NW')
@@ -203,7 +204,8 @@ class Dnapp(Tk):
         self.addb.grid(column=0,row=12,columnspan=2)
         addbh=Label(self.cfgpan,text="Add structure to ThreaDNA database.")
         addbh.grid(column=2,row=12,rowspan=1,sticky='EW')
-        
+
+
     """
     def helper(self):
         self.cfgpan=Toplevel()
@@ -609,8 +611,11 @@ class Dnapp(Tk):
             s=self.struc
         else:
             s=self.ida.get()
-        mesg=adds.main(unicode(self.prota.get()),unicode(s),unicode(self.pdb),ref)
-        tkMessageBox.showinfo("Execution completed",msg)
+        try:
+            mesg=adds.main(unicode(self.prota.get()),unicode(s),unicode(self.pdb),ref)
+            tkMessageBox.showinfo("Execution completed",mesg)
+        except:
+            tkMessageBox.showinfo("Problem", "Error in the execution. A possible cause, if you provided the NDB ID, is that the coordinate file is absent from the database. We recommend you to provide the PDB file to the Web3DNA webserver, and provide the output .out file to ThreaDNA.")
 
     # def run_helper(self):
     #     if self.ref.get()==0:
