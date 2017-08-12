@@ -1,4 +1,4 @@
-# ThreaDNA  version 1.0
+# ThreaDNA  version 1.2
 
 ## Installation
 If the correct dependencies are installed (see below), you only need to execute the INSTALL script (either from the command line or by double-clicking). 
