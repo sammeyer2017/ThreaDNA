@@ -1,5 +1,5 @@
 ----------------------------------------------------------
-----      	 ThreaDNA  version 1.0     	      ----
+----      	 ThreaDNA  version 1.2     	      ----
 ---- 		       README	 		      ----
 ----------------------------------------------------------
 
@@ -110,8 +110,8 @@ threadna -a [-p PDBfile] [-r REF] prot_name input
 - REF: Position of the reference nucleotide in the structure (default = central nucleotide). This is useful when combining/comparing models where the protein binds different numbers of DNA bases: you should then set a reference to align the binding profiles, for instance the index of a basepair that contacts a given protein residue. Typically, for the nucleosome it is the dyad basepair.
 
 RECOMMENDATION FOR THE INPUT: 
-- if you are analyzing a protein present in the NDB database, use the option (i) BUT CHECK THAT ALL BASEPAIRS ARE PRESENT IN THE LISTS on the server, as there are sometimes missing basepairs, which will result in errors or absurd deformation energies. This happens particularly in the case of extremely distorted DNA oligomers, where it can be difficult to properly define the base reference frames. 
-- if you are analyzing a protein not present or corrupted on the NDB server, download the PDB file and let it run on the Web3DNA webserver to get the .out file. AGAIN, CHECK THAT ALL BASEPAIRS WERE PROPERLY ANALYZED AND ARE PRESENT IN THE LIST. 
+- if you are analyzing a protein present in the NDB database, you may use the option (i) BUT CHECK THAT the coordinate files with base-pair and base-pair step morphological parameters is present in the database, and that all basepairs are present in these lists. In many cases, the files are not present and there are sometimes missing basepairs, which will result in errors or absurd deformation energies. This happens particularly in the case of extremely distorted DNA oligomers, where it can be difficult to properly define the base reference frames.
+- in general, we recommend using the Web3DNA webserver on the PDB file of interest, and providing the output (.out) to ThreaDNA, together with the PDB file. AGAIN, CHECK THAT ALL BASEPAIRS WERE PROPERLY ANALYZED AND ARE PRESENT IN THE LIST. 
 - If it does not work or you want to include several structures, try installing Curves+ or contact the authors for help. 
 
 
