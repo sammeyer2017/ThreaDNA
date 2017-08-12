@@ -186,14 +186,14 @@ def shortseqind(ca,se): #get nucleotide index in data
             sse=se[1]
             sl=monos
         else:
-            print "ERROR the seq must be a trinuc"
+            print("ERROR the seq must be a trinuc")
             return 1
     elif ca=="ABC_s" or case=="ABC_old_s" or ca=="step":
         if len(se) is 4:
             sse=se[1:3]
             sl=alldinucs
         else: 
-            print "ERROR the seq must be a tetra"
+            print("ERROR the seq must be a tetra")
             return 1
     elif ca=="NP":
         sse=se

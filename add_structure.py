@@ -10,6 +10,7 @@ from util import *
 
 basedir=os.path.abspath(os.path.dirname(sys.argv[0])).decode('utf8') #installation folder absolute path
 
+"""
 def autoanalyze(id,out):     #analyse sequence on webserver    
     url=urllib2.urlopen('http://ndbserver.rutgers.edu/service/ndb/atlas/stfeatures?searchTarget='+id.lower()+'&ftrType=bpmp&type=csv')
     #open url in ndb for query intra parameters
@@ -23,7 +24,7 @@ def autoanalyze(id,out):     #analyse sequence on webserver
     intertab=[map(float,x.split(',')[3:9]) for x in sp.split('\n')[1:-1]]  #convert results to float numbers             
     it=np.array(intratab)
     st=np.array(intertab)
-    np.savetxt(out+"_i.dat",it,fmt='%.3f') #save results in fils in the output directory
+    np.savetxt(out+"_i.dat",it,fmt='%.3f') #save results in files in the output directory
     np.savetxt(out+"_s.dat",st,fmt='%.3f')
     return it,st
 
@@ -38,6 +39,7 @@ def info(pdb,out): #pdb file analysis in tmp directory
     f1.close()
     f2.close()
     return
+"""
 
 def outf(infil,prot): #output prefix function
         out=unicode(infil.split("/")[-1]) #get structure prefix
@@ -134,79 +136,124 @@ def std_params(f,Qi,Qs):
         #print ca,np.mean(Et2,dtype=np.float128),np.std(Et2,dtype=np.float128)
         f.write(ca+"    "+str([np.mean(Et,dtype=np.float128),np.std(Et,dtype=np.float128)])+"\n")
 
+def getNDBid(id,out): #Get the NDB ID to PDB ID
+    print "Requesting 'http://www.rcsb.org/pdb/explore/explore.do?structureId="+id.lower()
+    url=urllib2.urlopen('http://www.rcsb.org/pdb/explore/explore.do?structureId='+id.lower()) # PDB url of the protein
+    pattern='href="http://ndbserver.rutgers.edu/service/ndb/atlas/summary?searchTarget='
+    ip = url.read()
+    ndbURL=None
+    
+    for line in ip.split('\n'):
+      if pattern in line:
+        ndbURL=line
+    
+    if not ndbURL: 
+      sys.exit("There is not a NDB ID associated to the PDB ID")
+    ndbURL=ndbURL.split('=')
+    ndb=ndbURL[2:]  
+    ndb=(" ".join(ndb))
+    ndb=ndb[:-1]
+    print "Found the NDB ID associated, that is : "+ndb
+    return getCSVfile(ndb,out)
+  
+def getCSVfile(id,out):                           
+  if id:
+    url=urllib2.urlopen('http://ndbserver.rutgers.edu/service/ndb/atlas/stfeatures?searchTarget='+id.lower()+'&ftrType=bpmp&type=csv')
+    #open url in ndb for query intra parameters
+    ip = url.read()
+    intratab=[map(float,x.split(',')[3:]) for x in ip.split('\n')[1:-1]] #convert results to float numbers
+    url=urllib2.urlopen('http://ndbserver.rutgers.edu/service/ndb/atlas/stfeatures?searchTarget='+id.lower()+'&ftrType=bpmsp&type=csv')
+    #open url in ndb for query step parameters
+    sp = url.read()
+    intertab=[map(float,x.split(',')[3:9]) for x in sp.split('\n')[1:-1]] #convert results to float numbers             
+    it=np.array(intratab)
+    st=np.array(intertab)
+    np.savetxt(out+"_i.dat",it,fmt='%.3f') #save results in files in the output directory
+    np.savetxt(out+"_s.dat",st,fmt='%.3f')
+    return it,st
+
+def outDirectory(id,name):
+    print "Creation of the structure directory "+id
+    out=basedir+u"/structures/"+name+u"/"+id+u"/" # Output absolute path
+    os.system("mkdir -p "+out.encode(encoding="UTF-8")) #Create output directories
+    return out
+
+def getPDBfile(id,name):
+    url='https://files.rcsb.org/download/'+id.lower()+'.pdb'
+    if not url:
+      sys.exit("ID not found in PDB")
+    out=outDirectory(id,name)+id
+    print "Downloading the PDB file" + url
+    PDBfile = urllib2.urlopen(url)
+    data = PDBfile.read()
+    with open(out+".pdb", "wb") as code:
+      code.write(data)
+    PDBfile.close()
+    return getInfoPDBfile(out,name)
+      
+def getInfoPDBfile(out,name): 
+    if ".pdb" in out:
+	directory=os.path.abspath(out)[:-4]
+	print "Creation of the structure directory"+name
+    else:
+	directory=out
+    PDBfile=open(directory+".pdb", "r")
+    directory=outf(directory,name)
+    info=open(directory+".info", "w") #Create info file
+    for line in PDBfile:
+      if any(line[:6]==x for x in ["HEADER","TITLE ","EXPDTA","AUTHOR"]):
+	info.write(line) #write informations
+      if "RESOLUTION." in line:
+        info.write(line[11:]) #write resolution
+    PDBfile.close()
+    info.close()
+    return directory
+
 def main(name,f,pdb=None,ref=None):
     ext=f.split(".")
-    if not pdb: #try to fetch automtically a pdb file
-        if len(ext)==1:
-            pdb=f+".pdb"
-        else:
-            pdb=f[:-4]+".pdb"
-    else:
-        print 
-        pdb=os.path.abspath(pdb) #converts to absolute path
+
     if len(ext)==1: # ! no file info
-        out=outf(pdb[:-4].split("/")[-1],name)
-        try:
-            info(pdb,out) #try to write structural info from pdb
-        except:
-            print "Warning : could not load structure information from "+pdb
-        Qi,Qs=autoanalyze(ext[0],out)
+	out=getPDBfile(f,name)
+	Qi,Qs=getNDBid(f,out)
 
     elif ext[-1]=="pdb":
-        f=os.path.abspath(f) #converts to absolute path
-        out=outf(f[:-4],name) #output absolute path and prefix
-        try:
-            info(f,out) #write structural info from pdb
-        except:
-            print "Warning : could not load structure information from "+f
-        os.chdir("/tmp/") #go to tmp dir to do analysis
-        try:
-            os.system("find_pair "+f.replace(" ","\ ")+" "+f[:-4].split("/")[-1].replace(" ","\ ")+".inp") #analyse of pdb file by 3dna
-            print "find_pair "+f.replace(" ","\ ")+" "+f[:-4].split("/")[-1].replace(" ","\ ")+".inp",os.getcwd()
-            os.system("analyze "+f[:-4].split("/")[-1].replace(" ","\ ")+".inp")
-        except:
-            sys.exit("Can't use x3dna on this computer, please check installation")
-        Qi,Qs=out_parameters(f[:-4].split("/")[-1]+".out",out) #extraction of parameters from .out file to .dat files
-        #os.system("rm /tmp/*") #clean tmp files
+	out=getInfoPDBfile(f,name)
+	Qi,Qs=getNDBid(f[:-4],out)
+
     elif ext[-1]=="out": # ! no file info
-        f=os.path.abspath(f) #converts to absolute path
-        out=outf(f[:-4],name) #output absolute path and prefix
-        try:
-            info(pdb,out) #write structural info from pdb
-        except:
-            print "Warning : could not load structure information from "+f[:-4]+".pdb"
-        Qi,Qs=out_parameters(f,out)#extraction of parameters from .out file to .dat files
+	f=os.path.abspath(f) #converts to absolute path
+	out=outf(f[:-4],name) #output absolute path and prefix
+	Qi,Qs=out_parameters(f,out)#extraction of parameters from .out file to .dat files
+	
     elif ext[-1]=="lis": # ! no file info
-        f=os.path.abspath(f) #converts to absolute path
-        out=outf(f[:-4],name) #output absolute path and prefix
-        try:
-            info(pdb,out) #try to write structural info from pdb
-        except:
-            print "Warning : could not load structure information from "+pdb
-        Qi,Qs=lis_parameters(f,out)
+	f=os.path.abspath(f) #converts to absolute path
+	out=outf(f[:-4],name) #output absolute path and prefix
+
+	Qi,Qs=lis_parameters(f,out)
     else:
-        sys.exit("Unknown extension")
+	sys.exit("Unknown extension")
     f2=open(out+".info","a+") #reopen info file
     f2.write("SIZE    "+str(Qi.shape[0])+"\n") # append base pairs count if not present
     print "Got parameters of size "+str(Qi.shape[0])+" for this structure"
     if ref==None:
-        print "Warning : no reference nucleotide loaded, will take the central nucleotide ("+str((Qi.shape[0]+1)/2)+") as reference"
-        f2.write("REF    "+str((Qi.shape[0]+1)/2)+"\n")
+	print "Warning : no reference nucleotide loaded, will take the central nucleotide ("+str((Qi.shape[0]+1)/2)+") as reference"
+	f2.write("REF    "+str((Qi.shape[0]+1)/2)+"\n")
     else:
-        f2.write("REF    "+str(ref)+"\n")
+	f2.write("REF    "+str(ref)+"\n")
     std_params(f2,Qi,Qs)
     f2.close()
     sl.update_list() #update struct list
-    print "List updated with new structure !"
+    print("List updated with new structure !")
+    return "List updated with new structure !"
 
+
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Imports the DNA deformation state from a new protein-DNA complex structural model, and adds it to the local database for use in threaDNA.') #program parser and help
     parser.add_argument('name', metavar='prot_name', type=str,help='Name of the protein. Caution: if several models will be analyzed for this protein, always use the same name/case.')
-    parser.add_argument('file',metavar='input',type=str,help='Input of the DNA base coordinates: (i) either a NDB ID (http://ndbserver.rutgers.edu) or (ii) a file containing the coarse-grained coordinates of the DNA within the complex (.out from 3DNA or the webserver http://w3dna.rutgers.edu, or .lis from Curves+) or (iii) the .pdb atomic coordinates of the protein-DNA complex if the software x3dna is installed on the computer and accessible in the path from the current directory.')
+    parser.add_argument('f',metavar='input',type=str,help='Input of the DNA base coordinates: (i) either a PDB ID (http://www.rcsb.org/pdb/home/home.do) or (ii) a file containing the coarse-grained coordinates of the DNA within the complex (.out from 3DNA or the webserver http://w3dna.rutgers.edu, or .lis from Curves+) or (iii) the .pdb atomic coordinates of the protein-DNA complex if the software x3dna is installed on the computer and accessible in the path from the current directory.')
     parser.add_argument("-p","--pdb",type=str,action='store', help="PDB file corresponding to the coordinates given in input. This allows threaDNA to extract additional information on the deformation model, in particular the structure resolution.")
     parser.add_argument("-r","--ref",type=int,action="store",help="Position of the reference nucleotide in this structure (default = central nucleotide). This is useful when combining/comparing models where the protein binds different numbers of DNA bases: you should then set a reference to align the binding profiles, for instance the index of a basepair that contacts a given protein residue. Typically, for the nucleosome it is the dyad basepair.")
     args=parser.parse_args()
 
-    name=unicode(args.name) #protein name
-    f=unicode(args.file) #input file or PDB ID file
-    main(name,f,unicode(args.pdb),args.ref)
+    main(args.name,args.f,args.pdb,args.ref)
