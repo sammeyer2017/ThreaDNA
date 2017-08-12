@@ -154,14 +154,18 @@ def getNDBid(id,out): #Get the NDB ID to PDB ID
     ndb=(" ".join(ndb))
     ndb=ndb[:-1]
     print "Found the NDB ID associated, that is : "+ndb
-    return getCSVfile(ndb,out)
+    return getCSVfile(id,out)
   
 def getCSVfile(id,out):                           
-  if id:
+        if id:
     url=urllib2.urlopen('http://ndbserver.rutgers.edu/service/ndb/atlas/stfeatures?searchTarget='+id.lower()+'&ftrType=bpmp&type=csv')
     #open url in ndb for query intra parameters
     ip = url.read()
+    print ip
     intratab=[map(float,x.split(',')[3:]) for x in ip.split('\n')[1:-1]] #convert results to float numbers
+    if intratab==[]:
+        print "ERROR: could not load the intra-bp parameter file. It is probably absent from the NDB database. Try to analyze your pdb file through the Web3DNA webserver, and provide the output .out file to ThreaDNA."
+        raise NameError("NDB coordinate file absent")
     url=urllib2.urlopen('http://ndbserver.rutgers.edu/service/ndb/atlas/stfeatures?searchTarget='+id.lower()+'&ftrType=bpmsp&type=csv')
     #open url in ndb for query step parameters
     sp = url.read()
