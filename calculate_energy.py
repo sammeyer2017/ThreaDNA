@@ -290,6 +290,7 @@ def main(params,sequence,output):
     p=read_params(params) #load input parameters (keys:values)
     p["Pattern"],P=convert(p.get("Pattern"),p["DNA parameter"]) #converts input pattern to regular expression
     p["Structures"],al,mi,si=getref(p["Protein"],p["Structures"].split(","),p["DNA parameter"])
+    
     q0,K,ind,n=load_dnamodel(p["DNA parameter"],loc,p.get("Temperature")) #load dna model parameters and index
     try:
         supercoiling=float(p["Superhelical density"])
@@ -306,13 +307,17 @@ def main(params,sequence,output):
         else:
             # save in directory of sequence
             name=fasta.split(".")[0]+"_"+params.split("/")[-1].split(".")[0]+".bed" #output file
+        namemat=name.split(".")[0]+"_en.pwm" #output file
+
     else:
+        print "ho"
         if output!="None":
             name=output
+            namemat=output
         else:
             name=params.split(".")[0]+".bed"
+            namemat=name.split(".")[0]+"_en.pwm" #output file
         seq,seqn=read_fasta2(loc+"structures/standard.fa")
-    namemat=name.split(".")[0]+"_en.pwm" #output file
     seqs_tmp=np.array([[ind[s[j:j+n]] for j in range(len(s)-n+1)] for s in seq],dtype=np.uint8)
     # --------- HANDLING OF SUPERCOILING ----------------------- #
     if supercoiling != 0.:
@@ -387,6 +392,15 @@ def main(params,sequence,output):
                 else:
                     Etmp,sm=E_tot(E,seqs_tmp,seqn,ind,n,name+"_tmp/"+s+"_rev.bed",p["Keep tmp"]=="Yes",P-p["Offset"]+2-n%2,P)
                     Et.append(Etmp)
+    # ------- Same for matrices : caution if the matrix sizes are not the same!
+    # Compute matrix size if not provided: take the smallest one from the list
+    if type(P)==list:
+        Pmat=min(P)
+        offsets=[(x-Pmat)/2 for x in P]
+        Ematreg=[]
+        for i,E in enumerate(Emat):
+            Ematreg.append(E[offsets[i]:(offsets[i]+Pmat)])
+        Emat=np.array(Ematreg)
     # -------------------------------
     # combination of structures
     print "Calculation : "+str(time.time()-t) #displays the total calculation time
@@ -396,7 +410,7 @@ def main(params,sequence,output):
         mi=np.reshape([x for pair in zip(mi,mi) for x in pair],-1)
         si=np.reshape([x for pair in zip(si,si) for x in pair],-1)
         al=np.reshape([x for pair in zip(al,P-al+2-n%2) for x in pair],-1)
-    Ematf=combinematrix(np.array(Emat),p,mi,si)
+    Ematf=combinematrix(Emat,p,mi,si)
     print "Writing position-weight-matrix in file %s"%namemat
     writepwm(Ematf,ind,namemat)
     if fasta!="None":

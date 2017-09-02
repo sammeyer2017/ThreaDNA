@@ -1,0 +1,79 @@
+<tool id="indirect-position-weight-matrix" name="Computation with PWMs" version="0.0.1">
+	<description>Create config file</description>
+	
+	<command interpreter="bash">
+
+	  pwm_wrapper.sh -o $outfile
+	  
+	  #if str($opt_seq.opt_seq_q) == "Yes":
+	  -s $opt_seq.input_sequence
+	  #else:
+	  -s None
+	  #end if
+	  
+	  #if str($opt_pwm.opt_pwm_q) == "EPWM":
+	  -e $opt_pwm.epwm -p None -f $opt_pwm.energ_fact
+	  #elif str($opt_pwm.opt_pwm_q) == "PPWM":
+	  -p $opt_pwm.ppwm -e None -f None
+	  #end if
+	</command>
+	
+	<inputs>
+
+
+	  <conditional name="opt_seq">
+	    <param name="opt_seq_q" type="select" label="Any sequence input?">
+	      <option value="No">No</option>
+	      <option value="Yes">Yes</option>
+	    </param>
+	    
+	    <when value="Yes">
+	      <param name="input_sequence" type="data" label="Input sequence file"/>	      
+	    </when>
+	  </conditional>
+
+
+	  <conditional name="opt_pwm">
+	    <param name="opt_pwm_q" type="select" label="Any PWM input?" help="You can provide an energy PWM as provided by the main ThreaDNA program, or a mono/dinucleotide probability PWM">
+	      <option value="No">No</option>
+	      <option value="EPWM">Energy PWM</option>
+	      <option value="PPWM">Probability PWM</option>
+	    </param>
+
+	    <when value="EPWM">
+	      <param name="epwm" type="data" label="Input energy PWM file"/>	      
+	      <param name="energ_fact" type="text" value="1.0" label="Energy factor to get k_B.T unit"/>			
+	    </when>
+
+	    <when value="PPWM">
+	      <param name="ppwm" type="data" label="Input probability PWM file"/>	      
+	    </when>	    
+	  </conditional>
+		
+	</inputs>
+
+	<outputs>
+		<data name="outfile" format="tabular" />
+	</outputs>
+	
+	<test>
+		<param name="input_sequence" value="buchnera_short.fasta"/>
+		<param name="epwm" value="buchnera_short_crp_en.pwm"/>
+		<param name="energy_factor" value="20.0"/>
+		<output name="outfile" file="buchnera_short_buchnera_short_crp_en.bed"/>
+	</test>
+
+	<help>
+**What it does**
+
+Modules that implements a series of operations on position weight-matrix files
+- either the classical ones or deformation energy/probability dinucleotide
+PWM.
+
+The computation and output depends on the type of input: sequence file, PWM file or both.
+- with sequence file only: computes the (mononucleotide) PWM from the list of sequences in the file. They must all have the same size. 
+- with energy PWM file only: computes the associated probability PWM, using the provided energy factor (default 1.) to transform the energies into k_B.T unit
+- with sequence file and one PWM file: computes the energy profile along the sequence(s) of the file. With a probability PWM, the profile is in k_B.T unit, with an energy PWM it is in the energy unit of the PWM. 
+	</help>
+
+</tool>

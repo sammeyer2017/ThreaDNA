@@ -69,10 +69,11 @@
 				<param name="tmp_fact" type="text" value="1.0" label="Temperature factor"/>
 		
 				<conditional name="param1">
-					<param name="param2" type="select" label="DNA parameter">
+				  <param name="param2" type="select" label="DNA parameter">
+				    <option value="NP">NP</option>
+										
 						<option value="ABC_s">ABC_s</option>
 						<option value="ABC_i">ABC_i</option>
-						<option value="NP">NP</option>
 					</param>
 				</conditional>
 				
