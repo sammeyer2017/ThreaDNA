@@ -1,0 +1,25 @@
+<tool id="calculate_energy_1" name="Calculate energy" version="0.1.0">
+	<description>Calculate energy</description>
+
+  <command interpreter="bash">
+		calculate_energy_wrapper.sh $output_galaxy $input_config
+	</command>
+	
+  <inputs>
+  	<param format="in" name="input_config" type="data" label="Open config file"/>
+  </inputs>
+
+	<outputs>
+		<data name="output_galaxy"/>
+	</outputs>
+	
+	<test>
+		<param name="input_config" value="fis.in"/>
+		<output name="output_galaxy" file="sequence_courte_fis.pwm"/>
+	</test>
+
+	<help>
+	  The program calculates the dinucleotide position weight matrix associated to the deformation model provided in input, in a generalized JASPAR format. Each element (i,j) of the matrix gives the energy contribution of the i-th dinucleotide along the protein, when this nucleotide is the j-th out of the 16 possible dinucleotide sequences. The energy is in the arbitrary scale used by ThreaDNA. This matrix file can be handled by the PWM-subprogram of ThreaDNA for various operations: computation of energy profiles, combination with traditional mononucleotide PWM, transformation into probability PWM, etc.
+	</help>
+
+</tool>
