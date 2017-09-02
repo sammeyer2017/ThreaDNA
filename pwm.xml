@@ -57,10 +57,10 @@
 	</outputs>
 	
 	<test>
-		<param name="input_sequence" value="sequence_courte.fasta"/>
-		<param name="epwm" value="crp_en.pwm"/>
-		<param name="energy_factor" value="1.0"/>
-		<output name="outfile" file="sequence_courte_crp_en.bed"/>
+		<param name="input_sequence" value="buchnera_short.fasta"/>
+		<param name="epwm" value="buchnera_short_crp_en.pwm"/>
+		<param name="energy_factor" value="20.0"/>
+		<output name="outfile" file="buchnera_short_buchnera_short_crp_en.bed"/>
 	</test>
 
 	<help>

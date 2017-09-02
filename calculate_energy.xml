@@ -15,9 +15,9 @@
 	</outputs>
 	
 	<test>
-		<param name="input_sequence" value="sequence_courte.fasta"/>
-		<param name="input_config" value="fis.in"/>
-		<output name="output_galaxy" file="sequence_courte_fis.bed"/>
+		<param name="input_sequence" value="buchnera_short.fasta"/>
+		<param name="input_config" value="crp.in"/>
+		<output name="output_galaxy" file="buchnera_short_crp.bed"/>
 	</test>
 
 	<help>

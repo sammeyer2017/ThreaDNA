@@ -14,8 +14,8 @@
 	</outputs>
 	
 	<test>
-		<param name="input_config" value="fis.in"/>
-		<output name="output_galaxy" file="sequence_courte_fis.pwm"/>
+		<param name="input_config" value="crp.in"/>
+		<output name="output_galaxy" file="crp_en.pwm"/>
 	</test>
 
 	<help>
