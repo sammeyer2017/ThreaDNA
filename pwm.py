@@ -16,12 +16,28 @@ jdel="\t"
 
 
 
-def get_aligned_sequences(aligned_sequence_file):
+def get_aligned_sequences(aligned_sequence_file, fastaq=None):
     """
     reads sequence file in fasta format or list of sequences, and returns the list of sequences with names
     """
     ext=aligned_sequence_file.split('.')[-1]
-    if ext=="fa" or ext=="fasta" or ext=="fsa":
+    if fastaq is not None:
+        if fastaq:
+            fq=True
+        else:
+            fq=False
+    else:
+        if ext=="fa" or ext=="fasta" or ext=="fsa":
+            fq=True
+        else:
+            with open(aligned_sequence_file, 'r') as f:
+                first_line = f.readline()
+                if first_line[0]==">":
+                    fq=True
+                else:
+                    fq=False
+    if fq:
+        # assumes a fasta file
         seqs,nam=read_fasta2(aligned_sequence_file)
         #seqs=list(SeqIO.parse(aligned_sequence_file,"fasta"))
         #li=[str(s.seq) for s in seqs]
@@ -129,22 +145,27 @@ def dinuc_pwm_to_mononuc(pmat, ind):
 
 
 
-def make_proba_matrix_from_energ_pwm(filename, b=1.):
+def make_proba_matrix_from_energ_pwm(filename, b=1.,outname=None):
     """
     - reads an energy motif file coming from ThreaDNA, in JASPAR format
     - b gives the energy scale to go to kT
     - outputs the probability matrix for dinucs in JASPAR format as well as mononuc
     """
+    if outname==None:
+        outn=filename.split(".")[0]+"_proba.pwm"
+    else:
+        outn=outname
     ind,Emat=load_pwm(filename)
     pmat=energ_pwm_to_proba_pwm(Emat,ind,b)
     mmat=dinuc_pwm_to_mononuc(pmat, ind)
     # export pmat and mmat in JASPAR format
-    writepwm(pmat,ind,filename.split(".")[0]+"_proba.pwm")
-    mind=dict([(ba,i) for i,ba in enumerate(bases)])
-    mmf=filename.split(".")[0]+"_mono.pwm"
-    writepwm(mmat,mind,mmf)
-    # plot the matrix
-    return filename.split(".")[0]+"_proba.pwm"
+    writepwm(pmat,ind,outn)
+    if outname==None:
+        mind=dict([(ba,i) for i,ba in enumerate(bases)])
+        mmf=filename.split(".")[0]+"_mono.pwm"
+        writepwm(mmat,mind,mmf)
+        # plot the matrix
+    return outn
 
 
 def seq_indexes_from_ind(seqs, ind):
@@ -428,7 +449,7 @@ def main(sequence, epwm, ppwm, energ, output):
     if sequence == "None":
         if epwm != "None":
             print("Transformation of energy PWM into probability PWM")
-            out=make_proba_matrix_from_energ_pwm(epwm, b)
+            out=make_proba_matrix_from_energ_pwm(epwm, b, outname=outp)
         else:
             print("You must provide an energy PWM or a sequence file as input!")
     else:

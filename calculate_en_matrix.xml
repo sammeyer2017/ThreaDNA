@@ -1,8 +1,8 @@
-<tool id="calculate_energy_1" name="Calculate energy" version="0.1.0">
-	<description>Calculate energy</description>
+<tool id="calculate_energy_matrix" name="Compute energy PWM" version="0.1.0">
+	<description>Compute energy PWM </description>
 
   <command interpreter="bash">
-		calculate_energy_wrapper.sh $output_galaxy $input_config
+		calculate_en_matrix_wrapper.sh $output_galaxy $input_config
 	</command>
 	
   <inputs>
@@ -10,7 +10,7 @@
   </inputs>
 
 	<outputs>
-		<data name="output_galaxy"/>
+		<data name="output_galaxy" format="tabular"/>
 	</outputs>
 	
 	<test>

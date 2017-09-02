@@ -1,0 +1,25 @@
+<tool id="plot_pwm" name="Plot PWM" version="0.1.0">
+	<description>Plot mono/dinucleotide PWM</description>
+
+  <command interpreter="bash">
+		plot_dinuc_pwm_wrapper.sh $output_galaxy $input_matrix
+	</command>
+	
+  <inputs>
+  	<param name="input_matrix" type="data" label="Open probability PWM file"/>
+  </inputs>
+
+	<outputs>
+		<data format="pdf" name="output_galaxy"/>
+	</outputs>
+	
+	<test>
+		<param name="input_matrix" value="crp_proba.pwm"/>
+		<output name="output_galaxy" file="crp_proba.pdf"/>
+	</test>
+
+	<help>
+	  Plots a mono/dinucleotide (generalized) probability PWM in JASPAR format. Output in PDF format. 
+	</help>
+
+</tool>

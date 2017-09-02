@@ -3,11 +3,11 @@
 	
 	<command interpreter="bash">
 
-	  pwm_wrapper.sh $outfile
+	  pwm_wrapper.sh -o $outfile
 	  
 	  #if str($opt_seq.opt_seq_q) == "Yes":
 	  -s $opt_seq.input_sequence
-	  else:
+	  #else:
 	  -s None
 	  #end if
 	  

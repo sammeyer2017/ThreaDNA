@@ -1,5 +1,5 @@
-<tool id="calculate_energy_1" name="Calculate energy" version="0.1.0">
-	<description>Calculate energy</description>
+<tool id="calculate_energy_1" name="Compute energy profile" version="0.1.0">
+	<description>Compute energy profile</description>
 
   <command interpreter="bash">
 		calculate_energy_wrapper.sh $output_galaxy $input_sequence $input_config

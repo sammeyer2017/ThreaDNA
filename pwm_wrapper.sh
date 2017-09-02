@@ -2,4 +2,5 @@
 # coding: utf8
 
 directory=`dirname $0`
-python $directory/pwm.py $~
+echo $@
+python $directory/pwm.py "$@"
